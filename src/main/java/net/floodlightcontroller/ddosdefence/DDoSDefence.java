@@ -56,7 +56,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	// Statistics
 	final static int CONNECTIONS_THRESHOLD = 100;
-	int connectionCount = 0;
+	HashMap<IPv4Address, ArrayList<TransportPort>> connectionListHM;
 	boolean protectionEnabled = false;
 
 	@Override
@@ -175,9 +175,12 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
 		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
-		mb.setExact(MatchField.TCP_SRC, srcPort);
-		mb.setExact(MatchField.IPV4_SRC, srcAddr);
-		mb.setExact(MatchField.IPV4_DST, dstAddr);
+		if(srcPort != null)
+			mb.setExact(MatchField.TCP_SRC, srcPort);
+		if(srcAddr != null)
+			mb.setExact(MatchField.IPV4_SRC, srcAddr);
+		if(dstAddr != null)
+			mb.setExact(MatchField.IPV4_DST, dstAddr);
 
 		OFFlowDelete.Builder fmb = sw.getOFFactory().buildFlowDelete();
 		fmb.setBufferId(pi.getBufferId());
@@ -194,6 +197,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 
 		// filter non TCP packets
+		// TODO: this method must also handle packets transmitted by the server to the client
 		if(!isProtectedServicePacket(eth))
 			return Command.CONTINUE;
 
@@ -203,11 +207,38 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// Define a list of flow actions to send to the switch
 		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
-		OFFlowAdd fAdd = buildFlowAdd(sw, pi,
-				ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(), ipv4Msg.getDestinationAddress());
+		ArrayList<TransportPort> connList = connectionListHM.get(ipv4Msg.getSourceAddress());
+		// if protectionEnabled, add current source port to the list for the current source address
+		if(protectionEnabled) {
+			// Create a new ArrayList HashMap entry if it doesn't exist
+			if(connList == null) {
+				connList = new ArrayList<TransportPort>();
+				connectionListHM.put(ipv4Msg.getSourceAddress(), connList);
+			}
 
-		OFMessageList.add(fAdd);
+			// Add the current source port to the list
+			connList.add(tcpMsg.getSourcePort());
+		}
 
+		// if current client connections are higher than threshold, build a drop rule
+		if(connList != null && connList.size() > CONNECTIONS_THRESHOLD) {
+			 // TODO: add drop rule
+		} else { // otherwise build a forward rule
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(), ipv4Msg.getDestinationAddress());
+			OFMessageList.add(fAdd);
+
+			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent) && connList != null) {
+				// Add OFDelete for (current_srcaddr:* -> D)
+				OFMessageList.add(buildFlowDelete(sw, pi,
+						ipv4Msg.getSourceAddress(), null, protectedServiceAddressForwarded));
+				// Add OFDelete for (D -> current_srcaddr:*)
+				OFMessageList.add(buildFlowDelete(sw, pi,
+						protectedServiceAddressForwarded, null, ipv4Msg.getSourceAddress()));
+			}
+		}
+
+		// Send all the rules to the switch
 		sw.write(OFMessageList);
 
 		return Command.STOP;
