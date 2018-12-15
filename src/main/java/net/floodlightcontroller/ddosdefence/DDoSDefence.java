@@ -18,6 +18,7 @@ import org.projectfloodlight.openflow.protocol.oxm.OFOxms;
 import org.projectfloodlight.openflow.types.EthType;
 import org.projectfloodlight.openflow.types.IPv4Address;
 import org.projectfloodlight.openflow.types.OFPort;
+import org.projectfloodlight.openflow.types.TransportPort;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -47,7 +48,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	// Parameters
 	IPv4Address protectedServiceAddress;
-	OFPort protectedServicePort;
+	TransportPort protectedServicePort;
 
 	// Statistics
 	final static int CONNECTIONS_THRESHOLD = 100;
@@ -107,6 +108,23 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return false;
 	}
 
+	boolean isProtectedServicePacket(Ethernet eth) {
+		// filter non TCP packets
+		if(!(eth.getPayload() instanceof IPv4))
+			return false;
+		IPv4 ipv4Msg = (IPv4)eth.getPayload();
+
+		if(!(ipv4Msg.getPayload() instanceof TCP))
+			return false;
+		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		// filter packets sent to other services
+		if(!(tcpMsg.getDestinationPort().equals(protectedServicePort)))
+			return false;
+
+		return true;
+	}
+
 	@Override
 	public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
 		OFPacketIn pi = (OFPacketIn)msg;
@@ -114,17 +132,11 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 
 		// filter non TCP packets
-		if(!(eth.getPayload() instanceof IPv4))
+		if(!isProtectedServicePacket(eth))
 			return Command.CONTINUE;
+
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
-
-		if(!(ipv4Msg.getPayload() instanceof TCP))
-			return Command.CONTINUE;
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
-
-		// filter packets sent to other services
-		if(!(tcpMsg.getDestinationPort().equals(protectedServicePort)))
-			return Command.CONTINUE;
 
 		// new MATCH list (ipv4 traffic to the protected server)
 		// add rule for (src:srcport -> dstaddress:address)
