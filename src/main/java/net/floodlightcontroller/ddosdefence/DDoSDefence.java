@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.projectfloodlight.openflow.protocol.OFFlowAdd;
+import org.projectfloodlight.openflow.protocol.OFFlowDelete;
+import org.projectfloodlight.openflow.protocol.OFFlowMod;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
 import org.projectfloodlight.openflow.protocol.OFType;
@@ -47,7 +49,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	protected IRestApiService restApiService;
 
 	// Parameters
-	IPv4Address protectedServiceAddress;
+	// TODO: those must be initialized... maybe using REST?
+	IPv4Address protectedServiceAddressForwarded;
+	IPv4Address protectedServiceAddressCurrent;
 	TransportPort protectedServicePort;
 
 	// Statistics
@@ -109,20 +113,78 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	}
 
 	boolean isProtectedServicePacket(Ethernet eth) {
-		// filter non TCP packets
+		// filter non IPv4 packets
 		if(!(eth.getPayload() instanceof IPv4))
 			return false;
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 
+		// filter non TCP packets
 		if(!(ipv4Msg.getPayload() instanceof TCP))
 			return false;
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		// filter packets not sent to the server (at new address or old address)
+		if(!ipv4Msg.getSourceAddress().equals(protectedServiceAddressCurrent)
+				&& !ipv4Msg.getSourceAddress().equals(protectedServiceAddressForwarded))
+			return false;
 
 		// filter packets sent to other services
 		if(!(tcpMsg.getDestinationPort().equals(protectedServicePort)))
 			return false;
 
 		return true;
+	}
+
+	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr) {
+		// new MATCH list (ipv4 traffic to the protected server)
+		// add rule for (src:srcport -> dstaddress:address)
+		Match.Builder mb = sw.getOFFactory().buildMatch();
+		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+		mb.setExact(MatchField.TCP_SRC, srcPort);
+		mb.setExact(MatchField.IPV4_SRC, srcAddr);
+		mb.setExact(MatchField.IPV4_DST, dstAddr);
+
+		// new RULE
+		OFFlowAdd.Builder fmb = sw.getOFFactory().buildFlowAdd();
+		fmb.setBufferId(pi.getBufferId());
+		fmb.setXid(pi.getXid());
+
+		// new ACTION LIST
+		OFActions actions = sw.getOFFactory().actions();
+		ArrayList<OFAction> actionList = new ArrayList<OFAction>();
+		OFOxms oxms = sw.getOFFactory().oxms();
+
+		// Rule can change IP destination address of packets
+		/*OFActionSetField setDlDst = actions.buildSetField()
+				.setField(
+					oxms.buildIpv4Dst()
+					.setValue(protectedServiceAddress)
+					.build()
+					).build();
+		actionList.add(setDlDst);*/
+
+		// attach ACTION LIST to RULE
+		fmb.setActions(actionList);
+		fmb.setMatch(mb.build());
+
+		return fmb.build();
+	}
+
+	OFFlowDelete buildFlowDelete(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr) {
+		// new MATCH list
+		// add rule for (src:srcport -> dstaddress:address)
+		Match.Builder mb = sw.getOFFactory().buildMatch();
+		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+		mb.setExact(MatchField.TCP_SRC, srcPort);
+		mb.setExact(MatchField.IPV4_SRC, srcAddr);
+		mb.setExact(MatchField.IPV4_DST, dstAddr);
+
+		OFFlowDelete.Builder fmb = sw.getOFFactory().buildFlowDelete();
+		fmb.setBufferId(pi.getBufferId());
+		fmb.setXid(pi.getXid());
+		fmb.setMatch(mb.build());
+
+		return fmb.build();
 	}
 
 	@Override
@@ -138,39 +200,15 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
-		// new MATCH list (ipv4 traffic to the protected server)
-		// add rule for (src:srcport -> dstaddress:address)
-		Match.Builder mb = sw.getOFFactory().buildMatch();
-		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
-		mb.setExact(MatchField.TCP_SRC, tcpMsg.getSourcePort());
-		mb.setExact(MatchField.IPV4_SRC, ipv4Msg.getSourceAddress());
-		mb.setExact(MatchField.IPV4_DST, protectedServiceAddress);
+		// Define a list of flow actions to send to the switch
+		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
-		// new RULE
-		OFFlowAdd.Builder fmb = sw.getOFFactory().buildFlowAdd();
-		fmb.setBufferId(pi.getBufferId());
-		fmb.setXid(pi.getXid());
+		OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+				ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(), ipv4Msg.getDestinationAddress());
 
-		// new ACTION LIST
-		OFActions actions = sw.getOFFactory().actions();
-		ArrayList<OFAction> actionList = new ArrayList<OFAction>();
-		OFOxms oxms = sw.getOFFactory().oxms();
+		OFMessageList.add(fAdd);
 
-		// Rule can change IP destination address of packets
-		OFActionSetField setDlDst = actions.buildSetField()
-				.setField(
-					oxms.buildIpv4Dst()
-					.setValue(protectedServiceAddress)
-					.build()
-					).build();
-		actionList.add(setDlDst);
-
-		// attach ACTION LIST to RULE
-		fmb.setActions(actionList);
-		fmb.setMatch(mb.build());
-
-		// send the ACTION
-		sw.write(fmb.build());
+		sw.write(OFMessageList);
 
 		return Command.STOP;
 	}
