@@ -56,7 +56,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	// Statistics
 	final static int CONNECTIONS_THRESHOLD = 100;
-	HashMap<IPv4Address, ArrayList<TransportPort>> connectionListHM;
+	HashMap<IPv4Address, ArrayList<TransportPort>> connectionListHM =
+			new HashMap<IPv4Address, ArrayList<TransportPort>>();
 	boolean protectionEnabled = false;
 
 	@Override
@@ -124,8 +125,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
 		// filter packets not sent to the server (at new address or old address)
-		if(!ipv4Msg.getSourceAddress().equals(protectedServiceAddressCurrent)
-				&& !ipv4Msg.getSourceAddress().equals(protectedServiceAddressForwarded))
+		if(!ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
+				&& !ipv4Msg.getDestinationAddress().equals(protectedServiceAddressForwarded))
 			return false;
 
 		// filter packets sent to other services
@@ -148,6 +149,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		OFFlowAdd.Builder fmb = sw.getOFFactory().buildFlowAdd();
 		fmb.setBufferId(pi.getBufferId());
 		fmb.setXid(pi.getXid());
+		// TODO: Investigate timeout
 
 		// new ACTION LIST
 		OFActions actions = sw.getOFFactory().actions();
