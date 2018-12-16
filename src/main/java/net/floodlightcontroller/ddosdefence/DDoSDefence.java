@@ -19,8 +19,11 @@ import org.projectfloodlight.openflow.protocol.match.MatchField;
 import org.projectfloodlight.openflow.protocol.oxm.OFOxms;
 import org.projectfloodlight.openflow.types.EthType;
 import org.projectfloodlight.openflow.types.IPv4Address;
+import org.projectfloodlight.openflow.types.IpProtocol;
+import org.projectfloodlight.openflow.types.OFBufferId;
 import org.projectfloodlight.openflow.types.OFPort;
 import org.projectfloodlight.openflow.types.TransportPort;
+import org.projectfloodlight.openflow.types.U64;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -41,6 +44,7 @@ import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.TCP;
 import net.floodlightcontroller.restserver.IRestApiService;
 import net.floodlightcontroller.restserver.RestletRoutable;
+import net.floodlightcontroller.util.FlowModUtils;
 
 public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDefenceREST {
 	protected IFloodlightProviderService floodlightProvider;
@@ -50,7 +54,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	// Parameters
 	// TODO: those must be initialized... maybe using REST?
-	IPv4Address protectedServiceAddressForwarded;
+	IPv4Address protectedServiceAddressForwarded = null;
 	IPv4Address protectedServiceAddressCurrent = IPv4Address.of("10.0.0.1");
 	TransportPort protectedServicePort = TransportPort.of(80);
 
@@ -147,15 +151,23 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
 		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
-		mb.setExact(MatchField.TCP_SRC, srcPort);
-		mb.setExact(MatchField.IPV4_SRC, srcAddr);
-		mb.setExact(MatchField.IPV4_DST, dstAddr);
+		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
+		if(srcPort != null)
+			mb.setExact(MatchField.TCP_SRC, srcPort);
+		if(srcAddr != null)
+			mb.setExact(MatchField.IPV4_SRC, srcAddr);
+		if(dstAddr != null)
+			mb.setExact(MatchField.IPV4_DST, dstAddr);
 
 		// new RULE
 		OFFlowAdd.Builder fmb = sw.getOFFactory().buildFlowAdd();
+		fmb.setOutPort(OFPort.CONTROLLER);
 		fmb.setBufferId(pi.getBufferId());
-		fmb.setXid(pi.getXid());
+		fmb.setCookie(U64.of(0));
+		fmb.setPriority(FlowModUtils.PRIORITY_MAX);
 		// TODO: Investigate timeout
+		fmb.setHardTimeout(10);
+		fmb.setIdleTimeout(10);
 
 		// new ACTION LIST
 		OFActions actions = sw.getOFFactory().actions();
@@ -183,6 +195,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
 		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
 		if(srcPort != null)
 			mb.setExact(MatchField.TCP_SRC, srcPort);
 		if(srcAddr != null)
@@ -239,7 +252,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(), ipv4Msg.getDestinationAddress());
 			OFMessageList.add(fAdd);
 
-			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent) && connList != null) {
+			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
+					&& protectionEnabled
+					&& connList != null) {
 				// Add OFDelete for (current_srcaddr:* -> D)
 				OFMessageList.add(buildFlowDelete(sw, pi,
 						ipv4Msg.getSourceAddress(), null, protectedServiceAddressForwarded));
@@ -258,6 +273,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	@Override
 	public String setEnableProtection(boolean enabled) {
 		protectionEnabled = enabled;
+		if(protectionEnabled = false)
+			protectedServiceAddressForwarded = null;
+
 		// TODO: Return another address from a list of public IP addresses, as the requirements
 		return "0.0.0.0";
 	}
