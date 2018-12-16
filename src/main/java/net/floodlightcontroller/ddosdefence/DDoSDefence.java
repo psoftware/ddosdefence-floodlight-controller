@@ -117,7 +117,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return false;
 	}
 
-	boolean isProtectedServicePacket(Ethernet eth) {
+	boolean isTCPPacket(Ethernet eth) {
 		// filter non IPv4 packets
 		if(!(eth.getPayload() instanceof IPv4))
 			return false;
@@ -133,6 +133,16 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		System.out.println("controller: packet is TCP");
 		System.out.println("controller: packet has srcaddr " + ipv4Msg.getSourceAddress().toString() +
 				" and port " + tcpMsg.getDestinationPort().toString());
+		return true;
+	}
+
+	boolean isProtectedServicePacket(Ethernet eth) {
+		// filter non TCP packets
+		if(!isTCPPacket(eth))
+			return false;
+
+		IPv4 ipv4Msg = (IPv4)eth.getPayload();
+		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
 		// filter packets not sent to the server (at new address or old address)
 		if(!ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
@@ -141,6 +151,25 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 		// filter packets sent to other services
 		if(!(tcpMsg.getDestinationPort().equals(protectedServicePort)))
+			return false;
+
+		return true;
+	}
+
+	boolean isServerToClientPacket(Ethernet eth) {
+		// filter non TCP packets
+		if(!isTCPPacket(eth))
+			return false;
+
+		IPv4 ipv4Msg = (IPv4)eth.getPayload();
+		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		// filter packets not coming from the server address
+		if(!ipv4Msg.getSourceAddress().equals(protectedServiceAddressCurrent))
+			return false;
+
+		// filter packets not coming from the server port
+		if(!(tcpMsg.getSourcePort().equals(protectedServicePort)))
 			return false;
 
 		return true;
@@ -223,15 +252,32 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 
-		// filter non TCP packets
-		// TODO: this method must also handle packets transmitted by the server to the client
+		// check if packet source is the protected server
+		if(isServerToClientPacket(eth)) {
+			System.out.println("controller: packet sent from the server to a client");
+
+			IPv4 ipv4Msg = (IPv4)eth.getPayload();
+			TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+			// create a new rule to allow the forwarding
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
+					ipv4Msg.getDestinationAddress(),
+					false);
+			sw.write(fAdd);
+
+			// pipeline traversal can end here
+			return Command.STOP;
+		}
+
+		// otherwise check if packet is coming from a client to the server
 		if(!isProtectedServicePacket(eth))
 			return Command.CONTINUE;
 
-		System.out.println("controller: Packet hasn't been discarded");
-
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		System.out.println("controller: packet sent from a client to the server");
 
 		// Define a list of flow actions to send to the switch
 		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
