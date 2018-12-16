@@ -146,7 +146,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return true;
 	}
 
-	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr) {
+	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr, boolean drop) {
 		// new MATCH list (ipv4 traffic to the protected server)
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
@@ -172,15 +172,20 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// new ACTION LIST
 		OFActions actions = sw.getOFFactory().actions();
 		ArrayList<OFAction> actionList = new ArrayList<OFAction>();
-		OFOxms oxms = sw.getOFFactory().oxms();
+
+		// add "Send to normal processing pipeline" action if drop is false,
+		// otherwise don't add anything, empty action list means drop action
+		if(!drop)
+			actionList.add(actions.output(OFPort.NORMAL, Integer.MAX_VALUE));
 
 		// Rule can change IP destination address of packets
-		/*OFActionSetField setDlDst = actions.buildSetField()
-				.setField(
-					oxms.buildIpv4Dst()
-					.setValue(protectedServiceAddress)
-					.build()
-					).build();
+		/*OFOxms oxms = sw.getOFFactory().oxms();
+		OFActionSetField setDlDst = actions.buildSetField()
+			.setField(
+				oxms.buildIpv4Dst()
+				.setValue(protectedServiceAddress)
+				.build()
+				).build();
 		actionList.add(setDlDst);*/
 
 		// attach ACTION LIST to RULE
@@ -249,7 +254,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			 // TODO: add drop rule
 		} else { // otherwise build a forward rule
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
-					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(), ipv4Msg.getDestinationAddress());
+					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
+					ipv4Msg.getDestinationAddress(),
+					false);
 			OFMessageList.add(fAdd);
 
 			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
