@@ -297,7 +297,12 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 		// if current client connections are higher than threshold, build a drop rule
 		if(connList != null && connList.size() > CONNECTIONS_THRESHOLD) {
-			 // TODO: add drop rule
+			// add a drop rule for the current client src address and port
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
+					ipv4Msg.getDestinationAddress(), true);
+			OFMessageList.add(fAdd);
+
 		} else { // otherwise build a forward rule
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
