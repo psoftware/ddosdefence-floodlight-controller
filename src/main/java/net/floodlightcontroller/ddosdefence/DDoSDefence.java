@@ -166,8 +166,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		fmb.setCookie(U64.of(0));
 		fmb.setPriority(FlowModUtils.PRIORITY_MAX);
 		// TODO: Investigate timeout
-		fmb.setHardTimeout(10);
-		fmb.setIdleTimeout(10);
+		fmb.setHardTimeout(60);
+		fmb.setIdleTimeout(60);
 
 		// new ACTION LIST
 		OFActions actions = sw.getOFFactory().actions();
