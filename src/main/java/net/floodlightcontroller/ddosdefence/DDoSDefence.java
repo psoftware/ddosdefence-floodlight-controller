@@ -131,19 +131,13 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
 		System.out.println("controller: packet is TCP");
-		System.out.println("controller: packet has srcaddr " + ipv4Msg.getSourceAddress().toString() +
-				" and port " + tcpMsg.getDestinationPort().toString());
+		System.out.println("controller: packet"
+				+ " has src " + ipv4Msg.getSourceAddress().toString() + ":" + tcpMsg.getSourcePort().toString()
+				+ " and dst " + ipv4Msg.getDestinationAddress().toString() + ":"  + tcpMsg.getDestinationPort().toString());
 		return true;
 	}
 
-	boolean isProtectedServicePacket(Ethernet eth) {
-		// filter non TCP packets
-		if(!isTCPPacket(eth))
-			return false;
-
-		IPv4 ipv4Msg = (IPv4)eth.getPayload();
-		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
-
+	boolean isClientToServerPacket(IPv4 ipv4Msg, TCP tcpMsg) {
 		// filter packets not sent to the server (at new address or old address)
 		if(!ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
 				&& !ipv4Msg.getDestinationAddress().equals(protectedServiceAddressForwarded))
@@ -156,14 +150,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return true;
 	}
 
-	boolean isServerToClientPacket(Ethernet eth) {
-		// filter non TCP packets
-		if(!isTCPPacket(eth))
-			return false;
-
-		IPv4 ipv4Msg = (IPv4)eth.getPayload();
-		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
-
+	boolean isServerToClientPacket(IPv4 ipv4Msg, TCP tcpMsg) {
 		// filter packets not coming from the server address
 		if(!ipv4Msg.getSourceAddress().equals(protectedServiceAddressCurrent))
 			return false;
@@ -190,6 +177,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 		// new RULE
 		OFFlowAdd.Builder fmb = sw.getOFFactory().buildFlowAdd();
+		fmb.setXid(pi.getXid());
 		fmb.setOutPort(OFPort.CONTROLLER);
 		fmb.setBufferId(pi.getBufferId());
 		fmb.setCookie(U64.of(0));
@@ -221,6 +209,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		fmb.setActions(actionList);
 		fmb.setMatch(mb.build());
 
+		System.out.println("controller: new buildFlowAdd rule created (with drop = " + Boolean.toString(drop) + ")");
 		return fmb.build();
 	}
 
@@ -247,17 +236,22 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	@Override
 	public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
-		System.out.println("controller: Received new packet");
-		OFPacketIn pi = (OFPacketIn)msg;
+		System.out.println("controller: Received new packet of type " + msg.getType().toString());
 
+		OFPacketIn pi = (OFPacketIn)msg;
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 
-		// check if packet source is the protected server
-		if(isServerToClientPacket(eth)) {
-			System.out.println("controller: packet sent from the server to a client");
+		// filter non TCP packets
+		if(!isTCPPacket(eth))
+			return Command.CONTINUE;
 
-			IPv4 ipv4Msg = (IPv4)eth.getPayload();
-			TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+		// get IPv4 and TCP headers
+		IPv4 ipv4Msg = (IPv4)eth.getPayload();
+		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		// check if packet source is the protected server
+		if(isServerToClientPacket(ipv4Msg,tcpMsg)) {
+			System.out.println("controller: packet sent from the server to a client");
 
 			// create a new rule to allow the forwarding
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
@@ -271,11 +265,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		}
 
 		// otherwise check if packet is coming from a client to the server
-		if(!isProtectedServicePacket(eth))
+		if(!isClientToServerPacket(ipv4Msg,tcpMsg))
 			return Command.CONTINUE;
-
-		IPv4 ipv4Msg = (IPv4)eth.getPayload();
-		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
 		System.out.println("controller: packet sent from a client to the server");
 
@@ -293,6 +284,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 			// Add the current source port to the list
 			connList.add(tcpMsg.getSourcePort());
+
+			System.out.println("controller: client " + ipv4Msg.getSourceAddress().toString()
+					+ " has now " + connList.size() + " connection count");
 		}
 
 		// if current client connections are higher than threshold, build a drop rule
