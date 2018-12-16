@@ -51,8 +51,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	// Parameters
 	// TODO: those must be initialized... maybe using REST?
 	IPv4Address protectedServiceAddressForwarded;
-	IPv4Address protectedServiceAddressCurrent;
-	TransportPort protectedServicePort;
+	IPv4Address protectedServiceAddressCurrent = IPv4Address.of("10.0.0.1");
+	TransportPort protectedServicePort = TransportPort.of(80);
 
 	// Statistics
 	final static int CONNECTIONS_THRESHOLD = 100;
@@ -119,10 +119,16 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			return false;
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 
+		System.out.println("controller: packet is IPv4");
+
 		// filter non TCP packets
 		if(!(ipv4Msg.getPayload() instanceof TCP))
 			return false;
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
+
+		System.out.println("controller: packet is TCP");
+		System.out.println("controller: packet has srcaddr " + ipv4Msg.getSourceAddress().toString() +
+				" and port " + tcpMsg.getDestinationPort().toString());
 
 		// filter packets not sent to the server (at new address or old address)
 		if(!ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
@@ -194,6 +200,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	@Override
 	public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
+		System.out.println("controller: Received new packet");
 		OFPacketIn pi = (OFPacketIn)msg;
 
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
@@ -202,6 +209,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// TODO: this method must also handle packets transmitted by the server to the client
 		if(!isProtectedServicePacket(eth))
 			return Command.CONTINUE;
+
+		System.out.println("controller: Packet hasn't been discarded");
 
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
