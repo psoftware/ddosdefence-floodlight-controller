@@ -1,0 +1,19 @@
+{
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+            [
+                "*.toc",
+                "*.aux",
+                "*.log",
+                "*.synctex.gz",
+                "*.eps"
+            ],
+			"path": "."
+		}
+	],
+	"settings": {
+		"TEXroot": "OFDDoSDefence.tex"
+	}
+}
