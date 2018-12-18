@@ -39,6 +39,7 @@ import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.core.web.ControllerSummaryResource;
 import net.floodlightcontroller.core.web.ControllerSwitchesResource;
 import net.floodlightcontroller.core.web.LoadedModuleLoaderResource;
+import net.floodlightcontroller.learningswitch.ILearningSwitchService;
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.TCP;
@@ -51,6 +52,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	
 	// REST Interface
 	protected IRestApiService restApiService;
+
+	// L2 Switch table Interface
+	protected ILearningSwitchService learningSwitch;
 
 	// Parameters
 	// TODO: those must be initialized... maybe using REST?
@@ -68,6 +72,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	public void init(FloodlightModuleContext context) throws FloodlightModuleException {
 		floodlightProvider = context.getServiceImpl(IFloodlightProviderService.class);
 		restApiService = context.getServiceImpl(IRestApiService.class);
+		learningSwitch = context.getServiceImpl(ILearningSwitchService.class);
 	}
 	
 	@Override
@@ -75,6 +80,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		Collection<Class<? extends IFloodlightService>> l =
 				new ArrayList<Class<? extends IFloodlightService>>();
 		l.add(IRestApiService.class);
+		l.add(ILearningSwitchService.class);
 		return l;
 	}
 
@@ -162,7 +168,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return true;
 	}
 
-	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr, boolean drop) {
+	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, Ethernet eth, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr, boolean drop) {
 		// new MATCH list (ipv4 traffic to the protected server)
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
@@ -190,10 +196,18 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		OFActions actions = sw.getOFFactory().actions();
 		ArrayList<OFAction> actionList = new ArrayList<OFAction>();
 
-		// add "Send to normal processing pipeline" action if drop is false,
+		// if rule is not drop then we must add a rule that switches packet to the correct
+		// destination port. This port must be obtained from the L2 switching table (implemented by LearningSwitch)
 		// otherwise don't add anything, empty action list means drop action
-		if(!drop)
-			actionList.add(actions.output(OFPort.NORMAL, Integer.MAX_VALUE));
+		// NOTE: OFPort.NORMAL cannot be used without an hybrid OpenFlow Switch
+		if(!drop) {
+			// learningSwitch.getFromPortMap() is thread safe (THANK GOD)
+			OFPort macPort = learningSwitch.getFromPortMap(sw, eth.getDestinationMACAddress(), null);
+			// if no switching entry is found, then packet must be flooded (as a normal L2 switch would do)
+			if(macPort == null)
+				macPort = OFPort.FLOOD;
+			actionList.add(actions.output(macPort, Integer.MAX_VALUE));
+		}
 
 		// Rule can change IP destination address of packets
 		/*OFOxms oxms = sw.getOFFactory().oxms();
@@ -254,7 +268,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			System.out.println("controller: packet sent from the server to a client");
 
 			// create a new rule to allow the forwarding
-			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
 					ipv4Msg.getDestinationAddress(),
 					false);
@@ -292,13 +306,13 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// if current client connections are higher than threshold, build a drop rule
 		if(connList != null && connList.size() > CONNECTIONS_THRESHOLD) {
 			// add a drop rule for the current client src address and port
-			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
 					ipv4Msg.getDestinationAddress(), true);
 			OFMessageList.add(fAdd);
 
 		} else { // otherwise build a forward rule
-			OFFlowAdd fAdd = buildFlowAdd(sw, pi,
+			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
 					ipv4Msg.getDestinationAddress(),
 					false);

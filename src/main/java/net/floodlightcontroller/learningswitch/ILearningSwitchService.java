@@ -18,7 +18,9 @@ package net.floodlightcontroller.learningswitch;
 
 import java.util.Map;
 
+import org.projectfloodlight.openflow.types.MacAddress;
 import org.projectfloodlight.openflow.types.OFPort;
+import org.projectfloodlight.openflow.types.VlanVid;
 
 import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.module.IFloodlightService;
@@ -30,4 +32,5 @@ public interface ILearningSwitchService extends IFloodlightService {
      * @return The learned host table
      */
     public Map<IOFSwitch, Map<MacVlanPair, OFPort>> getTable();
+    public OFPort getFromPortMap(IOFSwitch sw, MacAddress mac, VlanVid vlan);
 }
