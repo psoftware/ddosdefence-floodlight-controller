@@ -22,6 +22,8 @@ public class EnableDefenceResource extends ServerResource {
 		// parse JSON payload
 		ObjectMapper mapper = new ObjectMapper();
 		try {
+			// get JSON root
+			JsonNode root = mapper.readTree(fmJson);
 
 			// get enable field value
 			boolean enabled = Boolean.parseBoolean(root.get("enabled").asText());
