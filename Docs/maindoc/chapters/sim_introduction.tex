@@ -1,9 +1,9 @@
 \chapter{Initial Requirements}
 
-\subsection{Introduction}
+\section{Introduction}
 In this project we will create a SDN controller for defense against DDoS attacks. Through a REST API system, a web server can notify the begin of a DDoS attack; the controller will create an address change mechanism from D to D’.
 
-\subsection{Implementation}
+\section{Implementation}
 In this project we will implement:
 \begin{figure}[H]
 \begin{center}
@@ -15,7 +15,7 @@ In this project we will implement:
 
 We will implement a module inside ddosdefence-floodlight-controller/ src/main/java/net/ floodlightcontroller/ddosdefence here, there will be tree file: DDoSDefence.java, EnableDefenceResource.java IDDoSDefenceREST.java.
 
-\subsection{Assumption}
+\section{Assumption}
 Before starting the project we have thought about the issues we would have met, so we made the following assumption:
 \begin{itemize}
 	\item First part of the paper, which establishes the change of server address from D to D ', will not be implemented.
@@ -30,7 +30,7 @@ Before starting the project we have thought about the issues we would have met, 
 \end{itemize}
 * Assumptions are optional and will be implemented according to the difficulties we will encounter in the project.
 
-\subsection{Testing System}
+\section{Testing System}
 Our module will be tested using a set of scripts that we will produce, that emulates the client and server. Mininet will be used to create a virtual network composed  by a server and multiple (N) clients.
 
 Server (h1) can use addresses from a /24 subnet, in our case 7.7.7.0/24 will be used.
@@ -75,7 +75,7 @@ An example of HTTP Page forwarding response could be one not containing an HTML 
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[]{images/TestingTopology.png}
+\includegraphics[width=0.8\textwidth]{images/TestingTopology.png}
 \label{fig:testing}
 \caption{Testing Topology}
 \end{center}
@@ -87,7 +87,7 @@ This command can be used to dump all the switch flow entries.
 mininet> dpctl dump-flows
 \end{lstlisting}
 
-\subsubsection{Testing Parameters}
+\subsection{Testing Parameters}
 %%%%%DA SISTEMARE%%%%
 %Timeout ? (quello nel codice di anto)
 %\tehta = attack flow entry count threshold
@@ -99,7 +99,7 @@ mininet> dpctl dump-flows
 %\lamba attack - average request arrival rate from bots
 %\mu service rate
 
-\subsection{Final Documentation and Reporting}
+\section{Final Documentation and Reporting}
 At the end of this project will be produced:
 \begin{itemize}
 	\item Final report: accompanying document illustrating the choices made and the reasons for these choices for the implementation of the module,
