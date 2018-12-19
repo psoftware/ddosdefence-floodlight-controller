@@ -68,6 +68,14 @@ Both behaviours will be simulated using two separate scripts. Pseudo-code exampl
 As stated on the paper, the forwarding method must be sufficiently complex to not be executed by the bots. However this represents an issue to $./start_client.sh$ script that is, in reality, a bot itself. To overcome this issue, we can initially simplify the forwarding mechanism to let the script do the forward. However the $./start_bot.sh$ will ignore, in good faith, the simplified forwarding directive.
 An example of HTTP Page forwarding response could be one not containing an HTML page (we can check if contains <html> or not) but containing the address to forward. This is just for a testing purpose and can be subjected to changes due to chosen web server implementation.
 
+\begin{figure}[H]
+\begin{center}
+\includegraphics[]{../images/TestingTopology.png}
+\label{fig:testing}
+\caption{Testing Topology}
+\end{center}
+\end{figure}
+
 \paragraph{Checking the correct behaviour for OpenFlow rules:} 
 mininet> dpctl dump-flows
 This command can be used to dump all the switch flow entries.
