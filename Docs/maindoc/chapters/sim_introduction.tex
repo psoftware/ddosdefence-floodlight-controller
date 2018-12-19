@@ -81,12 +81,38 @@ An example of HTTP Page forwarding response could be one not containing an HTML 
 \end{center}
 \end{figure}
 
-\paragraph{Checking the correct behaviour for OpenFlow rules:}
-This command can be used to dump all the switch flow entries.
+\subsubsection{Checking the correct behaviour for OpenFlow rules:}
+This command can be used to dump flow entries of all switches.
 \begin{lstlisting}
 mininet> dpctl dump-flows
 \end{lstlisting}
 
+This will be used to check if controller behavior meets the requirements. The following test can be done:
+
+\paragraph{BOT/Client Connections arriving when protection is OFF}
+Every connection/packet must be forwarded to the server and every (response) packet generated from server must be forwarded to client. This means we expect a list of entries like this:
+\begin{lstlisting}
+<<ARP Entries>>
+src=<client ip>:<port>, dst_ip=<D>:<listen port>, ACTION: FORWARD
+src=<srv_ip>:<listen port>, dst_ip=<cl_ip>:<cl_port>, ACTION: FORWARD
+\end{lstlisting}
+
+\paragraph{BOT Connections arriving when protection is ON}
+We expect the same result as before, until client connections becomes more than threshold. At this point we expect (assuming only 1 connection made by client after threshold):
+\begin{lstlisting}
+<<ARP Entries>>
+<<Old FORWARD Entries for connections started before reaching thresh.>>
+src=<client ip>:<port>, dst_ip=<D>:<listen port>, ACTION: DROP
+\end{lstlisting}
+Old forward entries will be cleared by a rule timeout. Note that the web server, when forwarding, closes the connection after responding to the request, so, after the server response, all the Forward rules are not matched anymore.
+
+\paragraph{Client Connections arriving when protection is ON}
+If the client connects to D' address, all the old forward/drop rules related to that client must be deleted. So, after a client connects to D', we expect:
+\begin{lstlisting}
+<<ARP Entries>>
+src=<client ip>:<port>, dst_ip=<D'>:<listen port>, ACTION: FORWARD
+\end{lstlisting}
+No old rules must be found.
 \subsubsection{Testing Parameters}
 %%%%%DA SISTEMARE%%%%
 %Timeout ? (quello nel codice di anto)
