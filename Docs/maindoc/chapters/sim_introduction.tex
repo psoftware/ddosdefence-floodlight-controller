@@ -5,7 +5,6 @@ In this project we will create a SDN controller for defense against DDoS attacks
 
 \subsection{Implementation}
 In this project we will implement:
-%%%%AIUTO NON MI PRENDE L'IMMAGINE NON SO COME FARE NE CON ../images/ ne con images/
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{images/PseudoCode.png}
@@ -36,7 +35,7 @@ Our module will be tested using a set of scripts that we will produce, that emul
 
 Server (h1) can use addresses from a /24 subnet, in our case 7.7.7.0/24 will be used.
 Each client (h2-hN) will use an addresses took from the 80.80.80.0/24 subnet.
-The Controller will listen for OpenFlow $PACKET_IN$ connections on 127.0.0.1:6653.
+The Controller will listen for OpenFlow PACKET\_IN connections on 127.0.0.1:6653.
 One OpenFlow switch (s1) will be used to connect all the previous entities. No routing or complex forwarding rules are required because the switch will solve the problem only using L2 Table packet switching. The only rule to use on both server and clients is \\
 %\begin{lstlisting} %%%mi da errore sempre!!! uffffffff
 “route add -net 0.0.0.0/32 dev <out interface>”
@@ -45,28 +44,34 @@ One OpenFlow switch (s1) will be used to connect all the previous entities. No r
 to send all the packet originated from the emulated device through the interface connected to the switch. ARP on the originating packet device will make sure to set the correct destination MAC address.
 Clients can be regular service users or malicious ones:
 \begin{itemize}
-	\item Bots: will continuously do HTTP requests to a single target, but will not be able to compute any complex forwarding (like CAPTCHA or JavaScript implemented),
+	\item Bots: will continuously do HTTP requests to a single target, but will not be able to compute any complex forwarding (like CAPTCHA or JavaScript execution),
 	\item Clients: will perform regular HTTP requests and be able to do forwarding.
 \end{itemize}	
 Both behaviours will be simulated using two separate scripts. Pseudo-code examples could be:
-%\paragraph{./start_bot.sh serverip}
-%\begin{lstlisting}
-%While(true) {
-	Establish HTTP on server connection using keepalive; exits when connection is closed
-%}
-%\end{lstlisting}
-%\paragraph{./start_client.sh serverip}
-%\begin{lstlisting}
-%while(true) {
-	%Establish HTTP on server connection using keepalive; exits when connection is closed
-	%serverip = (if forwarded)  ? newaddress : serverip ; $#$ user can process forward
-	%sleep 2; $#$ user will generate less traffic than bots
-%}
+\paragraph{./start\_bot.sh serverip}
+Start one connection at time and retry to connect if disconnected, with no end. Bots behavior can be different than this, for example another one bot could start more connection asynchronusly.  However this would just increase the connection count of system and could be implemented just using more synchronous bots.
+\begin{lstlisting}[caption={./start\_bot.sh pseudo code},captionpos=b]
+while(true) {
+	Establish HTTP on server connection using keepalive;
+	continue when connection is closed
+}
+\end{lstlisting}
 
-%\end{lstlisting}
+\paragraph{./start\_client.sh serverip}\
+\begin{lstlisting}[caption={./start\_client.sh pseudo code},captionpos=b]
+while(true) {
+	Establish HTTP on server connection using keepalive;
+	continue when connection is closed
+	serverip = (if forwarded)  ? newaddress : serverip ; # user can process forward
+	print forwarded address if forwarded
+	sleep 2; # user will generate less traffic than bots
+}
 
-As stated on the paper, the forwarding method must be sufficiently complex to not be executed by the bots. However this represents an issue to $./start_client.sh$ script that is, in reality, a bot itself. To overcome this issue, we can initially simplify the forwarding mechanism to let the script do the forward. However the $./start_bot.sh$ will ignore, in good faith, the simplified forwarding directive.
-An example of HTTP Page forwarding response could be one not containing an HTML page (we can check if contains <html> or not) but containing the address to forward. This is just for a testing purpose and can be subjected to changes due to chosen web server implementation.
+\end{lstlisting}
+
+As stated on the paper, the forwarding method must be sufficiently complex to not be executed by the bots. However this represents an issue for ./start\_client.sh script that is, in reality, a bot itself. To overcome this issue, we can initially simplify the forwarding mechanism to let the script do the forward. However the ./start\_bot.sh will ignore, in good faith, the simplified forwarding directive.
+
+An example of HTTP Page forwarding response could be one not containing an HTML page (we can check if contains \textless html\textgreater\ or not) but containing the address to forward. This is just for a testing purpose and can be subjected to changes as a consequence of chosen web server implementation.
 
 \begin{figure}[H]
 \begin{center}
@@ -76,9 +81,11 @@ An example of HTTP Page forwarding response could be one not containing an HTML 
 \end{center}
 \end{figure}
 
-\paragraph{Checking the correct behaviour for OpenFlow rules:} 
-mininet> dpctl dump-flows
+\paragraph{Checking the correct behaviour for OpenFlow rules:}
 This command can be used to dump all the switch flow entries.
+\begin{lstlisting}
+mininet> dpctl dump-flows
+\end{lstlisting}
 
 \subsubsection{Testing Parameters}
 %%%%%DA SISTEMARE%%%%
