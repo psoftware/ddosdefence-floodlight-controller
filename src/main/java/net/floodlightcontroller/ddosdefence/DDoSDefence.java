@@ -3,6 +3,7 @@ package net.floodlightcontroller.ddosdefence;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.projectfloodlight.openflow.protocol.OFFlowAdd;
@@ -63,10 +64,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	TransportPort protectedServicePort = TransportPort.of(80);
 
 	// Statistics
-	final static int CONNECTIONS_THRESHOLD = 100;
-	HashMap<IPv4Address, ArrayList<TransportPort>> connectionListHM =
-			new HashMap<IPv4Address, ArrayList<TransportPort>>();
-	boolean protectionEnabled = false;
+	HashMap<IPv4Address, HashSet<TransportPort>> connectionListHM =
+			new HashMap<IPv4Address, HashSet<TransportPort>>();
 
 	@Override
 	public void init(FloodlightModuleContext context) throws FloodlightModuleException {
@@ -287,16 +286,16 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		// Define a list of flow actions to send to the switch
 		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
-		ArrayList<TransportPort> connList = connectionListHM.get(ipv4Msg.getSourceAddress());
+		HashSet<TransportPort> connList = connectionListHM.get(ipv4Msg.getSourceAddress());
 		// if protectionEnabled, add current source port to the list for the current source address
 		if(protectionEnabled) {
 			// Create a new ArrayList HashMap entry if it doesn't exist
 			if(connList == null) {
-				connList = new ArrayList<TransportPort>();
+				connList = new HashSet<TransportPort>();
 				connectionListHM.put(ipv4Msg.getSourceAddress(), connList);
 			}
 
-			// Add the current source port to the list
+			// Add the current source port to the list on if not present
 			connList.add(tcpMsg.getSourcePort());
 
 			System.out.println("controller: client " + ipv4Msg.getSourceAddress().toString()
