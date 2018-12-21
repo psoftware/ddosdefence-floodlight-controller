@@ -64,8 +64,11 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	TransportPort protectedServicePort = TransportPort.of(80);
 
 	// Statistics
+	// TODO: must be this initialized using REST?
+	final static int CONNECTIONS_THRESHOLD = 10;
 	HashMap<IPv4Address, HashSet<TransportPort>> connectionListHM =
 			new HashMap<IPv4Address, HashSet<TransportPort>>();
+	boolean protectionEnabled = true;
 
 	@Override
 	public void init(FloodlightModuleContext context) throws FloodlightModuleException {
@@ -244,6 +247,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		fmb.setXid(pi.getXid());
 		fmb.setMatch(mb.build());
 
+		System.out.println("controller: new buildFlowDelete rule created");
 		return fmb.build();
 	}
 
@@ -319,7 +323,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
 					&& protectionEnabled
-					&& connList != null) {
+					&& connList != null && false) {
 				// Add OFDelete for (current_srcaddr:* -> D)
 				OFMessageList.add(buildFlowDelete(sw, pi,
 						ipv4Msg.getSourceAddress(), null, protectedServiceAddressForwarded));
@@ -330,6 +334,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		}
 
 		// Send all the rules to the switch
+		System.out.println("controller: Sending rules");
 		sw.write(OFMessageList);
 
 		return Command.STOP;
