@@ -9,19 +9,32 @@ All used addresses are took from a list of addresses, which can be configurated 
 Filtering is made by counting the number of connections made by the client after the defence is enabled: if this count gets above a certain threshold, then the client is marked as a bot. However this behavior happens only if bots/clients don't use HTTP \textit{keep-alive} mode, which would be surreal and not praticable for performance reasons: to solve this, the forwarding HTTP server instance will cut the connection after sending the forwarding response.
 
 \section{Implementation}
-In this project we will implement:
+Any of the mentioned sources will be declared as part of \textbf{ddosdefence} package.
+
+\subsection{Controller receive()}
+In this project we will implement the controller code following the already provided pseudo code:
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{images/PseudoCode.png}
 \label{fig:pseudocode}
-\caption{Pseudo code}
+\caption{Controller pseudo code}
 \end{center}
 \end{figure}
 
-We will implement a module inside ddosdefence-floodlight-controller/ src/main/java/net/ floodlightcontroller/ddosdefence here, there will be tree file: DDoSDefence.java, EnableDefenceResource.java IDDoSDefenceREST.java.
+\textit{flowCount} will be implemented using an HashMap where the key is the client source IP and the value a list of ports: however, to give an efficient implementation, we will use an Hash, this time an HashSet, also to implement each list of ports. This is due to the fact that searching is an operation often needed for both the lists.
 
-\section{Assumption}
-Before starting the project we have thought about the issues we would have met, so we made the following assumption:
+The source name will be \textbf{DDoSDefence.java}.
+
+\subsection{REST APIs}
+\textbf{COMPLETARE}\\
+The source names will be \textbf{EnableDefenceResource.java, IDDoSDefenceREST.java}.
+
+\subsection{LearningSwitch module changes}
+LearningSwitch provides an implementation of L2 switch autolearning and gives a thread-safe service interface to access the switching table. LearningSwitch provides a public method to get the port associated to a destination MAC Address, however this is not provided by the \textbf{ILearningSwitch} interface.
+We added the method to the interface, also assuming that we can execute it without any concurrency issue: this has been checked inspecting the internal method implementation.
+
+\section{Assumptions}
+Before starting the project we have thought about the issues we would have met, so we made the following assumptions:
 \begin{itemize}
 	\item First part of the paper, which establishes the change of server address from D to D ', will not be implemented.
 	\item Number of IP addresses: predefined and sufficient for the purpose of the project. Our project involves the management of the number of IP addresses via a circular list for assignment. 
