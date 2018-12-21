@@ -1,7 +1,12 @@
 \chapter{Initial Requirements}
 
 \section{Introduction}
-In this project we will create a SDN controller for defense against DDoS attacks. Through a REST API system, a web server can notify the begin of a DDoS attack; the controller will create an address change mechanism from D to D’.
+In this project we will create a SDN controller for defense against DDoS attacks. Through a REST API system, a web server can notify the begin of a DDoS attack: the controller will create an address change mechanism from D to D’ while filtering malicious clients.
+
+Web Server will cooperate changing the listening address to a new one (called D') while opening another instance of the web server on the old address (called D). On this instance, however, the server will provide a forwarding mechanism to D' enough complex to not be executed by bots.
+All used addresses are took from a list of addresses, which can be configurated through the controller REST APIs.
+
+Filtering is made by counting the number of connections made by the client after the defence is enabled: if this count gets above a certain threshold, then the client is marked as a bot. However this behavior happens only if bots/clients don't use HTTP \textit{keep-alive} mode, which would be surreal and not praticable for performance reasons: to solve this, the forwarding HTTP server instance will cut the connection after sending the forwarding response.
 
 \section{Implementation}
 In this project we will implement:
