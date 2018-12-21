@@ -1,22 +1,40 @@
 \chapter{Initial Requirements}
 
-\subsection{Introduction}
-In this project we will create a SDN controller for defense against DDoS attacks. Through a REST API system, a web server can notify the begin of a DDoS attack; the controller will create an address change mechanism from D to D’.
+\section{Introduction}
+In this project we will create a SDN controller for defense against DDoS attacks. Through a REST API system, a web server can notify the begin of a DDoS attack: the controller will create an address change mechanism from D to D’ while filtering malicious clients.
 
-\subsection{Implementation}
-In this project we will implement:
+Web Server will cooperate changing the listening address to a new one (called D') while opening another instance of the web server on the old address (called D). On this instance, however, the server will provide a forwarding mechanism to D' enough complex to not be executed by bots.
+All used addresses are took from a list of addresses, which can be configurated through the controller REST APIs.
+
+Filtering is made by counting the number of connections made by the client after the defence is enabled: if this count gets above a certain threshold, then the client is marked as a bot. However this behavior happens only if bots/clients don't use HTTP \textit{keep-alive} mode, which would be surreal and not praticable for performance reasons: to solve this, the forwarding HTTP server instance will cut the connection after sending the forwarding response.
+
+\section{Implementation}
+Any of the mentioned sources will be declared as part of \textbf{ddosdefence} package.
+
+\subsection{Controller receive()}
+In this project we will implement the controller code following the already provided pseudo code:
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{images/PseudoCode.png}
 \label{fig:pseudocode}
-\caption{Pseudo code}
+\caption{Controller pseudo code}
 \end{center}
 \end{figure}
 
-We will implement a module inside ddosdefence-floodlight-controller/ src/main/java/net/ floodlightcontroller/ddosdefence here, there will be tree file: DDoSDefence.java, EnableDefenceResource.java IDDoSDefenceREST.java.
+\textit{flowCount} will be implemented using an HashMap where the key is the client source IP and the value a list of ports: however, to give an efficient implementation, we will use an Hash, this time an HashSet, also to implement each list of ports. This is due to the fact that searching is an operation often needed for both the lists.
 
-\subsection{Assumption}
-Before starting the project we have thought about the issues we would have met, so we made the following assumption:
+The source name will be \textbf{DDoSDefence.java}.
+
+\subsection{REST APIs}
+\textbf{COMPLETARE}\\
+The source names will be \textbf{EnableDefenceResource.java, IDDoSDefenceREST.java}.
+
+\subsection{LearningSwitch module changes}
+LearningSwitch provides an implementation of L2 switch autolearning and gives a thread-safe service interface to access the switching table. LearningSwitch provides a public method to get the port associated to a destination MAC Address, however this is not provided by the \textbf{ILearningSwitch} interface.
+We added the method to the interface, also assuming that we can execute it without any concurrency issue: this has been checked inspecting the internal method implementation.
+
+\section{Assumptions}
+Before starting the project we have thought about the issues we would have met, so we made the following assumptions:
 \begin{itemize}
 	\item First part of the paper, which establishes the change of server address from D to D ', will not be implemented.
 	\item Number of IP addresses: predefined and sufficient for the purpose of the project. Our project involves the management of the number of IP addresses via a circular list for assignment. 
@@ -30,7 +48,7 @@ Before starting the project we have thought about the issues we would have met, 
 \end{itemize}
 * Assumptions are optional and will be implemented according to the difficulties we will encounter in the project.
 
-\subsection{Testing System}
+\section{Testing System}
 Our module will be tested using a set of scripts that we will produce, that emulates the client and server. Mininet will be used to create a virtual network composed  by a server and multiple (N) clients.
 
 Server (h1) can use addresses from a /24 subnet, in our case 7.7.7.0/24 will be used.
@@ -75,18 +93,44 @@ An example of HTTP Page forwarding response could be one not containing an HTML 
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[]{images/TestingTopology.png}
+\includegraphics[width=0.8\textwidth]{images/TestingTopology.png}
 \label{fig:testing}
 \caption{Testing Topology}
 \end{center}
 \end{figure}
 
-\paragraph{Checking the correct behaviour for OpenFlow rules:}
-This command can be used to dump all the switch flow entries.
+\subsubsection{Checking the correct behaviour for OpenFlow rules:}
+This command can be used to dump flow entries of all switches.
 \begin{lstlisting}
 mininet> dpctl dump-flows
 \end{lstlisting}
 
+This will be used to check if controller behavior meets the requirements. The following test can be done:
+
+\paragraph{BOT/Client Connections arriving when protection is OFF}
+Every connection/packet must be forwarded to the server and every (response) packet generated from server must be forwarded to client. This means we expect a list of entries like this:
+\begin{lstlisting}
+<<ARP Entries>>
+src=<client ip>:<port>, dst_ip=<D>:<listen port>, ACTION: FORWARD
+src=<srv_ip>:<listen port>, dst_ip=<cl_ip>:<cl_port>, ACTION: FORWARD
+\end{lstlisting}
+
+\paragraph{BOT Connections arriving when protection is ON}
+We expect the same result as before, until client connections becomes more than threshold. At this point we expect (assuming only 1 connection made by client after threshold):
+\begin{lstlisting}
+<<ARP Entries>>
+<<Old FORWARD Entries for connections started before reaching thresh.>>
+src=<client ip>:<port>, dst_ip=<D>:<listen port>, ACTION: DROP
+\end{lstlisting}
+Old forward entries will be cleared by a rule timeout. Note that the web server, when forwarding, closes the connection after responding to the request, so, after the server response, all the Forward rules are not matched anymore.
+
+\paragraph{Client Connections arriving when protection is ON}
+If the client connects to D' address, all the old forward/drop rules related to that client must be deleted. So, after a client connects to D', we expect:
+\begin{lstlisting}
+<<ARP Entries>>
+src=<client ip>:<port>, dst_ip=<D'>:<listen port>, ACTION: FORWARD
+\end{lstlisting}
+No old rules must be found.
 \subsubsection{Testing Parameters}
 %%%%%DA SISTEMARE%%%%
 %Timeout ? (quello nel codice di anto)
@@ -99,7 +143,7 @@ mininet> dpctl dump-flows
 %\lamba attack - average request arrival rate from bots
 %\mu service rate
 
-\subsection{Final Documentation and Reporting}
+\section{Final Documentation and Reporting}
 At the end of this project will be produced:
 \begin{itemize}
 	\item Final report: accompanying document illustrating the choices made and the reasons for these choices for the implementation of the module,
