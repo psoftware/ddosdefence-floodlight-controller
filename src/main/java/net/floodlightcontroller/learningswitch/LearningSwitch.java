@@ -73,6 +73,7 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 	// Stores the learned state for each switch
 	protected Map<IOFSwitch, Map<MacVlanPair, OFPort>> macVlanToSwitchPortMap;
 
+	public static final int LEARNING_SWITCH_TABLE_ID = 10;
 	// flow-mod - for use in the cookie
 	public static final int LEARNING_SWITCH_APP_ID = 1;
 	// LOOK! This should probably go in some class that encapsulates
@@ -235,6 +236,7 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 		fmb.setHardTimeout(LearningSwitch.FLOWMOD_DEFAULT_HARD_TIMEOUT);
 		fmb.setPriority(LearningSwitch.FLOWMOD_PRIORITY);
 		fmb.setBufferId(bufferId);
+		fmb.setTableId(TableId.of(LEARNING_SWITCH_TABLE_ID));
 		fmb.setOutPort((command == OFFlowModCommand.DELETE) ? OFPort.ANY : outPort);
 		Set<OFFlowModFlags> sfmf = new HashSet<OFFlowModFlags>();
 		if (command != OFFlowModCommand.DELETE) {
