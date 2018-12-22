@@ -196,7 +196,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	boolean isServerToClientPacket(IPv4 ipv4Msg, TCP tcpMsg) {
 		// filter packets not coming from the server address
-		if(!ipv4Msg.getSourceAddress().equals(getCurrentAddress()))
+		if(!ipv4Msg.getSourceAddress().equals(getCurrentAddress())
+				&& !ipv4Msg.getSourceAddress().equals(getForwardingAddress()))
 			return false;
 
 		// filter packets not coming from the server port
