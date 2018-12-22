@@ -442,7 +442,6 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 				this.writeFlowMod(sw, OFFlowModCommand.ADD, OFBufferId.NO_BUFFER, mb.build(), inPort);
 			}
 		}
-		System.out.println("LearningSwitch: GOT PACKET");
 		return Command.CONTINUE;
 	}
 
