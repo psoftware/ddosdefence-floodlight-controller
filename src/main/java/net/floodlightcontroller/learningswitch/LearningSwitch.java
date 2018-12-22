@@ -38,7 +38,10 @@ import net.floodlightcontroller.core.types.MacVlanPair;
 import net.floodlightcontroller.debugcounter.IDebugCounter;
 import net.floodlightcontroller.debugcounter.IDebugCounterService;
 import net.floodlightcontroller.debugcounter.IDebugCounterService.MetaData;
+import net.floodlightcontroller.packet.ARP;
 import net.floodlightcontroller.packet.Ethernet;
+import net.floodlightcontroller.packet.ICMP;
+import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.restserver.IRestApiService;
 import net.floodlightcontroller.util.FlowModUtils;
 import net.floodlightcontroller.util.OFMessageUtils;
@@ -73,7 +76,7 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 	// Stores the learned state for each switch
 	protected Map<IOFSwitch, Map<MacVlanPair, OFPort>> macVlanToSwitchPortMap;
 
-	public static final int LEARNING_SWITCH_TABLE_ID = 10;
+	public static final int LEARNING_SWITCH_TABLE_ID = 0;
 	// flow-mod - for use in the cookie
 	public static final int LEARNING_SWITCH_APP_ID = 1;
 	// LOOK! This should probably go in some class that encapsulates
@@ -359,6 +362,13 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 		.setExact(MatchField.ETH_SRC, srcMac)
 		.setExact(MatchField.ETH_DST, dstMac);
 
+		if(eth.getPayload() instanceof ARP)
+			mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
+		else if(eth.getPayload() instanceof IPv4 && ((IPv4)eth.getPayload()).getPayload() instanceof ICMP) {
+			mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+			mb.setExact(MatchField.IP_PROTO, IpProtocol.ICMP);
+		}
+
 		if (!vlan.equals(VlanVid.ZERO)) {
 			mb.setExact(MatchField.VLAN_VID, OFVlanVidMatch.ofVlanVid(vlan));
 		}
@@ -405,6 +415,15 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 			// If source MAC is a unicast address, learn the port for this MAC/VLAN
 			this.addToPortMap(sw, sourceMac, vlan, inPort);
 		}
+
+		// after doing the learning, filter only ARP and ICMP packets
+		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
+		if(eth.getPayload() instanceof ARP)
+			System.out.println("LearningSwitch: got ARP packet");
+		else if(eth.getPayload() instanceof IPv4 && ((IPv4)eth.getPayload()).getPayload() instanceof ICMP)
+			System.out.println("LearningSwitch: got ICMP packet");
+		else
+			return Command.CONTINUE;
 
 		// Now output flow-mod and/or packet
 		OFPort outPort = getFromPortMap(sw, destMac, vlan);
