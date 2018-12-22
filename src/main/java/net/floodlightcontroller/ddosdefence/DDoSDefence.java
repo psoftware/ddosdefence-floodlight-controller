@@ -121,7 +121,12 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	@Override
 	public boolean isCallbackOrderingPostreq(OFType type, String name) {
-		// TODO Auto-generated method stub
+		// LearningSwitch must be executed BEFORE this module to let
+		// the switch auto-learn ports before DDoSDefence tries to figure out
+		// the out port of a packet flow
+		// TODO: fix, if possible, the hardcoded class name
+		if(name.equals("learningswitch"))
+			return true;
 		return false;
 	}
 
