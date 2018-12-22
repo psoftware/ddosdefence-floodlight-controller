@@ -131,14 +131,14 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			return false;
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 
-		System.out.println("controller: packet is IPv4");
+		//System.out.print("controller: packet is IPv4");
 
 		// filter non TCP packets
 		if(!(ipv4Msg.getPayload() instanceof TCP))
 			return false;
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
-		System.out.println("controller: packet is TCP");
+		//System.out.println("controller: packet is TCP");
 		System.out.println("controller: packet"
 				+ " has src " + ipv4Msg.getSourceAddress().toString() + ":" + tcpMsg.getSourcePort().toString()
 				+ " and dst " + ipv4Msg.getDestinationAddress().toString() + ":"  + tcpMsg.getDestinationPort().toString());
@@ -300,10 +300,12 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			}
 
 			// Add the current source port to the list on if not present
-			connList.add(tcpMsg.getSourcePort());
-
-			System.out.println("controller: client " + ipv4Msg.getSourceAddress().toString()
-					+ " has now " + connList.size() + " connection count");
+			boolean new_port_connection = connList.add(tcpMsg.getSourcePort());
+			if(new_port_connection)
+				System.out.println("controller: client " + ipv4Msg.getSourceAddress().toString()
+						+ " has now " + connList.size() + " connection count");
+			else
+				System.out.println("controller: already counted client port");
 		}
 
 		// if current client connections are higher than threshold, build a drop rule
