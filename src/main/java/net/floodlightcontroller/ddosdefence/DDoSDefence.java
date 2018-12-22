@@ -1,6 +1,7 @@
 package net.floodlightcontroller.ddosdefence;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Map;
 
 import org.projectfloodlight.openflow.protocol.OFFlowAdd;
 import org.projectfloodlight.openflow.protocol.OFFlowDelete;
+import org.projectfloodlight.openflow.protocol.OFFlowDeleteStrict;
 import org.projectfloodlight.openflow.protocol.OFFlowMod;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
@@ -49,6 +51,8 @@ import net.floodlightcontroller.restserver.RestletRoutable;
 import net.floodlightcontroller.util.FlowModUtils;
 
 public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDefenceREST {
+	public static final int DDOSDEFENCE_APP_ID = 1;
+
 	protected IFloodlightProviderService floodlightProvider;
 	
 	// REST Interface
@@ -59,9 +63,17 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	// Parameters
 	// TODO: those must be initialized... maybe using REST?
-	IPv4Address protectedServiceAddressForwarded = null;
-	IPv4Address protectedServiceAddressCurrent = IPv4Address.of("10.0.0.1");
 	TransportPort protectedServicePort = TransportPort.of(80);
+	ArrayList<IPv4Address> addressPool = new ArrayList<>(Arrays.asList(
+			IPv4Address.of("7.7.7.1"),
+			IPv4Address.of("7.7.7.2"),
+			IPv4Address.of("7.7.7.3"),
+			IPv4Address.of("7.7.7.4"),
+			IPv4Address.of("7.7.7.5")));
+
+	// TODO: short impose a max of about 32,000 addresses
+	// which is about an half of a /16 subnet
+	short currentAddressIndex = 1;
 
 	// Statistics
 	// TODO: must be this initialized using REST?
@@ -130,6 +142,25 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return false;
 	}
 
+	IPv4Address nextAddress() {
+		// increase addressPool index
+		currentAddressIndex++;
+		// extract the new IP address
+		currentAddressIndex = (short)(currentAddressIndex % addressPool.size());
+		return addressPool.get(currentAddressIndex);
+	}
+	
+	IPv4Address getForwardingAddress() {
+		if(!protectionEnabled)
+			return null;
+		int previousIndex = (short)((currentAddressIndex-1) % addressPool.size());
+		return addressPool.get(previousIndex);
+	}
+
+	IPv4Address getCurrentAddress() {
+		return addressPool.get(currentAddressIndex);
+	}
+
 	boolean isTCPPacket(Ethernet eth) {
 		// filter non IPv4 packets
 		if(!(eth.getPayload() instanceof IPv4))
@@ -152,8 +183,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	boolean isClientToServerPacket(IPv4 ipv4Msg, TCP tcpMsg) {
 		// filter packets not sent to the server (at new address or old address)
-		if(!ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
-				&& !ipv4Msg.getDestinationAddress().equals(protectedServiceAddressForwarded))
+		if(!ipv4Msg.getDestinationAddress().equals(getCurrentAddress())
+				&& !ipv4Msg.getDestinationAddress().equals(getForwardingAddress()))
 			return false;
 
 		// filter packets sent to other services
@@ -165,7 +196,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	boolean isServerToClientPacket(IPv4 ipv4Msg, TCP tcpMsg) {
 		// filter packets not coming from the server address
-		if(!ipv4Msg.getSourceAddress().equals(protectedServiceAddressCurrent))
+		if(!ipv4Msg.getSourceAddress().equals(getCurrentAddress()))
 			return false;
 
 		// filter packets not coming from the server port
@@ -175,7 +206,24 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return true;
 	}
 
-	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, Ethernet eth, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr, boolean drop) {
+	/*U64 getRulesCookie(IPv4Address sourceIp) {
+		// format:
+		// 0x????	|	????	|   ????????   |
+		// 16 bit	|	16 bit	|	32 bit	   |
+		// appid	|srv addr i.|   client ip  |
+		// we use the server pool index instead of the server address because
+		// bits are not sufficient. index is a short and it's represented
+		// on 16 bits
+		// TODO: THIS SCHEMA IS OBSOLETE. I found a better solution which does
+		// not involve an overcomplication of cookies. We need just to remember the source address
+
+		long new_cookie = (DDOSDEFENCE_APP_ID << 48) | sourceIp.getInt();
+
+		return U64.of(new_cookie);
+	}*/
+
+	OFFlowAdd buildFlowAdd(IOFSwitch sw, OFPacketIn pi, Ethernet eth,
+			IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr, boolean drop) {
 		// new MATCH list (ipv4 traffic to the protected server)
 		// add rule for (src:srcport -> dstaddress:address)
 		Match.Builder mb = sw.getOFFactory().buildMatch();
@@ -193,7 +241,6 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		fmb.setXid(pi.getXid());
 		fmb.setOutPort(OFPort.CONTROLLER);
 		fmb.setBufferId(pi.getBufferId());
-		fmb.setCookie(U64.of(0));
 		fmb.setPriority(FlowModUtils.PRIORITY_MAX);
 		// TODO: Investigate timeout
 		fmb.setHardTimeout(60);
@@ -234,14 +281,10 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return fmb.build();
 	}
 
-	OFFlowDelete buildFlowDelete(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, TransportPort srcPort, IPv4Address dstAddr) {
-		// new MATCH list
-		// add rule for (src:srcport -> dstaddress:address)
+	OFFlowDelete buildFlowDelete(IOFSwitch sw, OFPacketIn pi, IPv4Address srcAddr, IPv4Address dstAddr) {
 		Match.Builder mb = sw.getOFFactory().buildMatch();
 		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
 		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
-		if(srcPort != null)
-			mb.setExact(MatchField.TCP_SRC, srcPort);
 		if(srcAddr != null)
 			mb.setExact(MatchField.IPV4_SRC, srcAddr);
 		if(dstAddr != null)
@@ -251,7 +294,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		fmb.setBufferId(pi.getBufferId());
 		fmb.setXid(pi.getXid());
 		fmb.setMatch(mb.build());
-
+		fmb.setCookieMask(U64.FULL_MASK);
 		System.out.println("controller: new buildFlowDelete rule created");
 		return fmb.build();
 	}
@@ -326,18 +369,19 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
 					ipv4Msg.getDestinationAddress(),
 					false);
-			OFMessageList.add(fAdd);
 
-			if(ipv4Msg.getDestinationAddress().equals(protectedServiceAddressCurrent)
+			if(ipv4Msg.getDestinationAddress().equals(getCurrentAddress())
 					&& protectionEnabled
-					&& connList != null && false) {
-				// Add OFDelete for (current_srcaddr:* -> D)
+					&& connList != null) {
+				// Add OFDelete for (current_srcaddr:* -> D) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
-						ipv4Msg.getSourceAddress(), null, protectedServiceAddressForwarded));
-				// Add OFDelete for (D -> current_srcaddr:*)
+						ipv4Msg.getSourceAddress(), getForwardingAddress()));
+				// Add OFDelete for (D -> current_srcaddr:*) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
-						protectedServiceAddressForwarded, null, ipv4Msg.getSourceAddress()));
+						getForwardingAddress(), ipv4Msg.getSourceAddress()));
 			}
+
+			OFMessageList.add(fAdd);
 		}
 
 		// Send all the rules to the switch
@@ -350,11 +394,13 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	@Override
 	public String setEnableProtection(boolean enabled) {
 		protectionEnabled = enabled;
-		if(protectionEnabled = false)
-			protectedServiceAddressForwarded = null;
 
-		// TODO: Return another address from a list of public IP addresses, as the requirements
-		return "0.0.0.0";
+		// if enabled, return next pool address
+		// otherwise return current
+		if(enabled)
+			return nextAddress().toString();
+		else
+			return getCurrentAddress().toString();
 	}
 
 	public class DDoSDefenceWebRoutable implements RestletRoutable {
