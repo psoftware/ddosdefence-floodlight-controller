@@ -298,17 +298,17 @@ class ConsoleApp( Frame ):
 				console.sendCmd("ifconfig " + interface_name + " "
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 127.0.0.1 80");
+								+ "./client/start_bot.sh 7.7.7.1 80");
 				client_address += 1;
 			elif console.node.name.startswith("Client"):
 				console.sendCmd("ifconfig " + interface_name + " "
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 127.0.0.1 80");
+								+ "./client/start_bot.sh 7.7.7.1 80");
 				print("ifconfig " + interface_name
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 127.0.0.1 80")
+								+ "./client/start_bot.sh 7.7.7.1 80")
 				client_address += 1;
 			elif console.node.name.startswith("HTTPServer"):
 				console.sendCmd("ifconfig " + interface_name + " "
@@ -368,7 +368,7 @@ class Object( object ):
 
 if __name__ == '__main__':
 	setLogLevel( 'info' )
-	contr = RemoteController( 'DDoSDefence-controller1', ip='127.0.0.1', port=6633 )
+	contr = RemoteController( 'DDoSDefence-controller', ip='127.0.0.1', port=6653 )
 	#network = TreeNet( depth=2, fanout=4, controller=contr )
 	network = Mininet( topo=DDoSTestTopo(bots_n=7, client_n=4), controller=contr)
 	network.start()
