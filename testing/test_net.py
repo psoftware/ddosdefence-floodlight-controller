@@ -304,7 +304,7 @@ class ConsoleApp( Frame ):
 				console.sendCmd("ifconfig " + interface_name + " "
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 7.7.7.1 80");
+								+ "./client/start_client.sh 7.7.7.1 80");
 				print("ifconfig " + interface_name
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
@@ -370,7 +370,7 @@ if __name__ == '__main__':
 	setLogLevel( 'info' )
 	contr = RemoteController( 'DDoSDefence-controller', ip='127.0.0.1', port=6653 )
 	#network = TreeNet( depth=2, fanout=4, controller=contr )
-	network = Mininet( topo=DDoSTestTopo(bots_n=7, client_n=4), controller=contr)
+	network = Mininet( topo=DDoSTestTopo(bots_n=8, client_n=3), controller=contr)
 	network.start()
 	app = ConsoleApp( network, width=4 )
 	app.mainloop()
