@@ -305,16 +305,12 @@ class ConsoleApp( Frame ):
 									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
 								+ "./client/start_client.sh 7.7.7.1 80");
-				print("ifconfig " + interface_name
-									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 7.7.7.1 80")
 				client_address += 1;
 			elif console.node.name.startswith("HTTPServer"):
 				console.sendCmd("ifconfig " + interface_name + " "
 									+ "7.7.7.1 netmask 255.255.255.0 && "
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "python -m SimpleHTTPServer 80");
+								+ "python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
 				client_address += 1;
 '''
 	def initdevices( self ):
