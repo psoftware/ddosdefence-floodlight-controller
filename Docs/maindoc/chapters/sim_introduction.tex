@@ -85,7 +85,7 @@ Before starting the project we have thought about the issues we would have met, 
 \begin{itemize}
 	\item Our project requires implementing a CAPTCHA system. Due to the complexity and to the eventually required external connection made by this components, we will give a simplified implementation. A custom implementation is also required to let the client scripts to follow a CAPTCHA forward without human intervention (more in Testing chapter). \textbf{*}
 	\item WebServer always reset/close a connection while sending a forwarding response. Required to manage keep-alive issues caused when client reuses the same source port for multiple requests (client connection count would not increase).
-	\item WebServer must be always available, at list while protection is enabled, to not let clients make new connections due to timeout expiration.
+	\item WebServer must be always available, at least while protection is enabled, to not let clients make new connections due to timeout expiration.
 	\item WebServer never initialize a connection. Simplifies response packet switch flow management.
 \end{itemize}
 
@@ -187,7 +187,8 @@ If the client connects to D' address, all the old forward/drop rules related to 
 src=<client ip>:<port>, dst_ip=<D'>:<listen port>, ACTION: FORWARD
 \end{lstlisting}
 No old rules must be found.
-\subsubsection{Testing Parameters}
+
+%\subsubsection{Testing Parameters}
 %%%%%DA SISTEMARE%%%%
 %Timeout ? (quello nel codice di anto)
 %\tehta = attack flow entry count threshold
