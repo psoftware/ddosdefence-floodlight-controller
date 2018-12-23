@@ -31,7 +31,7 @@ The source names will be \textbf{EnableDefenceResource.java, IDDoSDefenceREST.ja
 
 \subsection{LearningSwitch module changes}
 LearningSwitch provides an implementation of L2 switch autolearning and gives a thread-safe service interface to access the switching table. LearningSwitch provides a public method to get the port associated to a destination MAC Address, however this is not provided by the \textbf{ILearningSwitch} interface.
-We added the method to the interface, also assuming that we can execute it without any concurrency issue: this has been checked inspecting the internal method implementation.
+We will add the method to the interface, also assuming that we can execute it without any concurrency issue: this has been checked inspecting internal method implementation.
 
 \section{Assumptions}
 Before starting the project we have thought about the issues we would have met, so we made the following assumptions:
@@ -49,17 +49,32 @@ Before starting the project we have thought about the issues we would have met, 
 * Assumptions are optional and will be implemented according to the difficulties we will encounter in the project.
 
 \section{Testing System}
-Our module will be tested using a set of scripts that we will produce, that emulates the client and server. Mininet will be used to create a virtual network composed  by a server and multiple (N) clients.
+Our module will be tested using a set of scripts that we will produce. Mininet APIs will be used to create a virtual network composed by:
+\begin{itemize}
+	\item One server;
+	\item A fixed number of clients (mixed Bot and Users).
+\end{itemize}
 
 Server (h1) can use addresses from a /24 subnet, in our case 7.7.7.0/24 will be used.
 Each client (h2-hN) will use an addresses took from the 80.80.80.0/24 subnet.
+
 The Controller will listen for OpenFlow PACKET\_IN connections on 127.0.0.1:6653.
-One OpenFlow switch (s1) will be used to connect all the previous entities. No routing or complex forwarding rules are required because the switch will solve the problem only using L2 Table packet switching. The only rule to use on both server and clients is \\
-%\begin{lstlisting} %%%mi da errore sempre!!! uffffffff
-“route add -net 0.0.0.0/32 dev <out interface>”
-%\end{lstlisting}
-\\
-to send all the packet originated from the emulated device through the interface connected to the switch. ARP on the originating packet device will make sure to set the correct destination MAC address.
+One OpenFlow switch (s1) will be used to connect all the previous entities.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{images/TestingTopology.png}
+\label{fig:testing}
+\caption{Testing Topology}
+\end{center}
+\end{figure}
+
+No routing or complex forwarding rules are required because the switch will solve the problem only using L2 Table packet switching. The only rule to use on both server and clients is \\
+\begin{lstlisting}
+route add -net 0.0.0.0/32 dev <out interface>
+\end{lstlisting}
+
+to send all the packet originated from the emulated device through the interface connected to the switch. ARP mechanism on the packet originating device will make sure to set the correct destination MAC address.
 Clients can be regular service users or malicious ones:
 \begin{itemize}
 	\item Bots: will continuously do HTTP requests to a single target, but will not be able to compute any complex forwarding (like CAPTCHA or JavaScript execution),
@@ -67,20 +82,20 @@ Clients can be regular service users or malicious ones:
 \end{itemize}	
 Both behaviours will be simulated using two separate scripts. Pseudo-code examples could be:
 \paragraph{./start\_bot.sh serverip}
-Start one connection at time and retry to connect if disconnected, with no end. Bots behavior can be different than this, for example another one bot could start more connection asynchronusly.  However this would just increase the connection count of system and could be implemented just using more synchronous bots.
+Start one connection at time and retry to connect if disconnected, with no end. Bots behavior can be different than this, for example another one bot could start more connection asynchronusly. However this would just increase the connection count of system and could be implemented just using more synchronous bots.
 \begin{lstlisting}[caption={./start\_bot.sh pseudo code},captionpos=b]
 while(true) {
 	Establish HTTP on server connection using keepalive;
-	continue when connection is closed
+	retry when connection is closed
 }
 \end{lstlisting}
 
 \paragraph{./start\_client.sh serverip}\
 \begin{lstlisting}[caption={./start\_client.sh pseudo code},captionpos=b]
 while(true) {
-	Establish HTTP on server connection using keepalive;
+	Establish HTTP on server connection on serverip using keepalive;
 	continue when connection is closed
-	serverip = (if forwarded)  ? newaddress : serverip ; # user can process forward
+	serverip = (if forwarded)  ? newaddress : serverip ; # user can follow forward
 	print forwarded address if forwarded
 	sleep 2; # user will generate less traffic than bots
 }
@@ -90,14 +105,6 @@ while(true) {
 As stated on the paper, the forwarding method must be sufficiently complex to not be executed by the bots. However this represents an issue for ./start\_client.sh script that is, in reality, a bot itself. To overcome this issue, we can initially simplify the forwarding mechanism to let the script do the forward. However the ./start\_bot.sh will ignore, in good faith, the simplified forwarding directive.
 
 An example of HTTP Page forwarding response could be one not containing an HTML page (we can check if contains \textless html\textgreater\ or not) but containing the address to forward. This is just for a testing purpose and can be subjected to changes as a consequence of chosen web server implementation.
-
-\begin{figure}[H]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{images/TestingTopology.png}
-\label{fig:testing}
-\caption{Testing Topology}
-\end{center}
-\end{figure}
 
 \subsubsection{Checking the correct behaviour for OpenFlow rules:}
 This command can be used to dump flow entries of all switches.
