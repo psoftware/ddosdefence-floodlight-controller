@@ -26,8 +26,42 @@ In this project we will implement the controller code following the already prov
 The source name will be \textbf{DDoSDefence.java}.
 
 \subsection{REST APIs}
-\textbf{COMPLETARE}\\
-The source names will be \textbf{EnableDefenceResource.java, IDDoSDefenceREST.java}.
+At least two resources are needed to let the server manage and enable the service.
+
+\subsubsection{DDoSDefend Initialization}
+\textit{Address: /ddosdefence/init/json\\
+Request Type: JSON, Response Type: empty or error\\\\}
+Required to initialize the controller. Can be executed \textbf{only once}, as a simplification.
+Values to be initialized are:
+\begin{itemize}
+	\item Service port: port binded by the service to defend
+	\item Public Address pool: addresses used and sent back by controller when protection is enabled
+	\item Threshold: max number of connection after client is marked as a bot
+\end{itemize}
+
+\begin{lstlisting}[caption={DDoSDefend Initialization Request format/example},captionpos=b]
+	{
+		serviceport: <valid port number>
+		addresses: [pool of addresses]
+		threshold: <valid natural number>
+	}
+\end{lstlisting}
+
+In case of invalid parameter values, returns an error as Reponse Code.
+
+\subsubsection{DDoSDefend Management}
+\textit{Address: /ddosdefence/manage/json\\
+Request Type: JSON, Response Type: IPv4 Address (string)\\\\}
+
+Can be used to enable or disable the protection. When enabled, response is set to the new address on which the HTTP server must bind. When disabled, response is set to an empty string. Can be executed only \textbf{after Initialization}.
+
+\begin{lstlisting}[caption={DDoSDefend Management Request format/example},captionpos=b]
+	{
+		enabled: <true/false>
+	}
+\end{lstlisting}
+
+The source names will be \textbf{InitDefenceResource.java, EnableDefenceResource.java, IDDoSDefenceREST.java}.
 
 \subsection{LearningSwitch module changes}
 LearningSwitch provides an implementation of L2 switch autolearning and gives a thread-safe service interface to access the switching table. LearningSwitch provides a public method to get the port associated to a destination MAC Address, however this is not provided by the \textbf{ILearningSwitch} interface.
@@ -112,7 +146,7 @@ This command can be used to dump flow entries of all switches.
 mininet> dpctl dump-flows
 \end{lstlisting}
 
-This will be used to check if controller behavior meets the requirements. The following test can be done:
+This will be used to check if controller behavior follows the requirements. The following tests can be done:
 
 \paragraph{BOT/Client Connections arriving when protection is OFF}
 Every connection/packet must be forwarded to the server and every (response) packet generated from server must be forwarded to client. This means we expect a list of entries like this:
