@@ -230,10 +230,11 @@ class ConsoleApp( Frame ):
 		"Create and return a menu (really button) bar."
 		f = Frame( self )
 		buttons = [
-			#( 'Hosts', lambda: self.select( 'hosts' ) ),
-			#( 'Switches', lambda: self.select( 'switches' ) ),
+			( 'Hosts', lambda: self.select( 'hosts' ) ),
+			( 'Switches', lambda: self.select( 'switches' ) ),
 			#( 'Controllers', lambda: self.select( 'controllers' ) ),
 			( 'StartTest', self.startbots ),
+			( 'GetFlows', self.getflows ),
 			( 'Ping', self.ping ),
 			( 'Interrupt', self.stop ),
 			( 'Clear', self.clear ),
@@ -287,6 +288,12 @@ class ConsoleApp( Frame ):
 		"Stop everything and quit."
 		self.stop( wait=False)
 		Frame.quit( self )
+
+	def getflows( self ):
+		switches = self.consoles[ 'switches' ].consoles
+		for console in switches:
+			console.clear();
+			console.sendCmd("ovs-dpctl dump-flows");
 
 	def startbots( self ):
 		"Start bots"
