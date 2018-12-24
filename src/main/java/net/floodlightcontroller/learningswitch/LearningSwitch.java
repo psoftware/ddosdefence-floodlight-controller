@@ -349,6 +349,15 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 		counterPacketOut.increment();
 	}
 
+	private void addMatchPacketTypesFromPacket(Ethernet eth, Match.Builder mb) {
+		if(eth.getPayload() instanceof ARP)
+			mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
+		else if(eth.getPayload() instanceof IPv4 && ((IPv4)eth.getPayload()).getPayload() instanceof ICMP) {
+			mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+			mb.setExact(MatchField.IP_PROTO, IpProtocol.ICMP);
+		}
+	}
+
 	protected Match createMatchFromPacket(IOFSwitch sw, OFPort inPort, FloodlightContext cntx) {
 		// The packet in match will only contain the port number.
 		// We need to add in specifics for the hosts we're routing between.
@@ -361,13 +370,7 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 		mb.setExact(MatchField.IN_PORT, inPort)
 		.setExact(MatchField.ETH_SRC, srcMac)
 		.setExact(MatchField.ETH_DST, dstMac);
-
-		if(eth.getPayload() instanceof ARP)
-			mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
-		else if(eth.getPayload() instanceof IPv4 && ((IPv4)eth.getPayload()).getPayload() instanceof ICMP) {
-			mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
-			mb.setExact(MatchField.IP_PROTO, IpProtocol.ICMP);
-		}
+		addMatchPacketTypesFromPacket(eth, mb);
 
 		if (!vlan.equals(VlanVid.ZERO)) {
 			mb.setExact(MatchField.VLAN_VID, OFVlanVidMatch.ofVlanVid(vlan));
@@ -456,6 +459,8 @@ implements IFloodlightModule, ILearningSwitchService, IOFMessageListener, IContr
 				mb.setExact(MatchField.ETH_SRC, m.get(MatchField.ETH_DST))                         
 				.setExact(MatchField.ETH_DST, m.get(MatchField.ETH_SRC))     
 				.setExact(MatchField.IN_PORT, outPort);
+				addMatchPacketTypesFromPacket(eth, mb);
+
 				if (m.get(MatchField.VLAN_VID) != null) {
 					mb.setExact(MatchField.VLAN_VID, m.get(MatchField.VLAN_VID));
 				}
