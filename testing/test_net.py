@@ -304,22 +304,13 @@ class ConsoleApp( Frame ):
 		for console in consoles:
 			interface_name = console.node.name + "-eth0";
 			if console.node.name.startswith("Bot"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_bot.sh 7.7.7.1 80");
+				console.sendCmd("./client/start_bot.sh 7.7.7.1 80");
 				client_address += 1;
 			elif console.node.name.startswith("Client"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "./client/start_client.sh 7.7.7.1 80");
+				console.sendCmd("./client/start_client.sh 7.7.7.1 80");
 				client_address += 1;
 			elif console.node.name.startswith("HTTPServer"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "7.7.7.1 netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
-								+ "python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
+				console.sendCmd("python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
 				client_address += 1;
 
 	def enableddosprotection( self ):
@@ -337,18 +328,29 @@ class ConsoleApp( Frame ):
 					"python server/MultithreadHTTPServer.py 7.7.7.1 80 " + new_address + " & " +
 					"python server/MultithreadHTTPServer.py " + new_address + " 80 \"<html>Standard page content</html>\""
 					);
-'''
+
 	def initdevices( self ):
 		"Init bots, clients and server"
 		consoles = self.consoles[ 'hosts' ].consoles
+		client_address = 1;
 		for console in consoles:
+			console.waitOutput();
+			interface_name = console.node.name + "-eth0";
 			if console.node.name.startswith("Bot"):
-				console.sendCmd('cd client');
+				console.sendCmd("ifconfig " + interface_name + " "
+									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
+									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+				client_address += 1;
 			elif console.node.name.startswith("Client"):
-				console.sendCmd('cd client');
+				console.sendCmd("ifconfig " + interface_name + " "
+									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
+									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+				client_address += 1;
 			elif console.node.name.startswith("HTTPServer"):
-				console.sendCmd('cd server');
-'''	
+				console.sendCmd("ifconfig " + interface_name + " "
+									+ "7.7.7.1 netmask 255.255.255.0 && "
+									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+
 
 # Make it easier to construct and assign objects
 
@@ -417,5 +419,6 @@ if __name__ == '__main__':
 	controllerRESTApi.init(port=80, threshold=10);
 
 	app = ConsoleApp( network, controllerRESTApi, width=4 )
+	app.initdevices()
 	app.mainloop()
 	network.stop()
