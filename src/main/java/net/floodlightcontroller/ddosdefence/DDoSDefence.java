@@ -350,8 +350,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
 		HashSet<TransportPort> connList = connectionListHM.get(ipv4Msg.getSourceAddress());
-		// if protectionEnabled, add current source port to the list for the current source address
-		if(protectionEnabled) {
+		// if protectionEnabled, add current source port to the list for the current source address.
+		// only connections to forwarding server (D) must be taken into account (pseudo code does not do this)
+		if(protectionEnabled && ipv4Msg.getDestinationAddress().equals(getForwardingAddress())) {
 			// Create a new ArrayList HashMap entry if it doesn't exist
 			if(connList == null) {
 				connList = new HashSet<TransportPort>();
