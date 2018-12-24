@@ -344,25 +344,29 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		if(!isClientToServerPacket(ipv4Msg,tcpMsg))
 			return Command.CONTINUE;
 
+		IPv4Address clientAddress = ipv4Msg.getSourceAddress();
+		TransportPort clientPort = tcpMsg.getSourcePort();
+		IPv4Address requestedServerAddress = ipv4Msg.getDestinationAddress();
+		//TransportPort requestedServerPort = tcpMsg.getDestinationPort();
 		System.out.println("controller: packet sent from a client to the server");
 
 		// Define a list of flow actions to send to the switch
 		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
-		HashSet<TransportPort> connList = connectionListHM.get(ipv4Msg.getSourceAddress());
+		HashSet<TransportPort> connList = connectionListHM.get(clientAddress);
 		// if protectionEnabled, add current source port to the list for the current source address.
 		// only connections to forwarding server (D) must be taken into account (pseudo code does not do this)
-		if(protectionEnabled && ipv4Msg.getDestinationAddress().equals(getForwardingAddress())) {
+		if(protectionEnabled && requestedServerAddress.equals(getForwardingAddress())) {
 			// Create a new ArrayList HashMap entry if it doesn't exist
 			if(connList == null) {
 				connList = new HashSet<TransportPort>();
-				connectionListHM.put(ipv4Msg.getSourceAddress(), connList);
+				connectionListHM.put(clientAddress, connList);
 			}
 
 			// Add the current source port to the list on if not present
-			boolean new_port_connection = connList.add(tcpMsg.getSourcePort());
+			boolean new_port_connection = connList.add(clientPort);
 			if(new_port_connection)
-				System.out.println("controller: client " + ipv4Msg.getSourceAddress().toString()
+				System.out.println("controller: client " + clientAddress.toString()
 						+ " has now " + connList.size() + " connection count");
 			else
 				System.out.println("controller: already counted client port");
@@ -372,25 +376,25 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		if(connList != null && connList.size() > connectionsThreshold) {
 			// add a drop rule for the current client src address
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
-					ipv4Msg.getSourceAddress(), null,
-					ipv4Msg.getDestinationAddress(), true);
+					clientAddress, null,
+					requestedServerAddress, true);
 			OFMessageList.add(fAdd);
 
 		} else { // otherwise build a forward rule
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
-					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
-					ipv4Msg.getDestinationAddress(),
+					clientAddress, clientPort,
+					requestedServerAddress,
 					false);
 
-			if(ipv4Msg.getDestinationAddress().equals(getCurrentAddress())
+			if(requestedServerAddress.equals(getCurrentAddress())
 					&& protectionEnabled
 					&& connList != null) {
-				// Add OFDelete for (current_srcaddr:* -> D) old entries
+				// Add OFDelete for (client_srcaddr:* -> D) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
-						ipv4Msg.getSourceAddress(), getForwardingAddress()));
-				// Add OFDelete for (D -> current_srcaddr:*) old entries
+						clientAddress, getForwardingAddress()));
+				// Add OFDelete for (D -> client_srcaddr:*) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
-						getForwardingAddress(), ipv4Msg.getSourceAddress()));
+						getForwardingAddress(), clientAddress));
 			}
 
 			OFMessageList.add(fAdd);
