@@ -14,7 +14,7 @@ while true; do
 	if [[ "$REQUEST_RESULT" == *"<html>"* ]]; then
 		echo "Got Regular HTTP Response"
 	else
-		HTTPSERVER_ADDRESS=$REQUEST_RESULT;
+		HTTPSERVER_ADDRESS=$(echo "$REQUEST_RESULT" | tail -n 1);
 		echo "Forwarding to $HTTPSERVER_ADDRESS";
 	fi
 	sleep 2
