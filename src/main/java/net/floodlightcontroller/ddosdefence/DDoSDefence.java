@@ -67,6 +67,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	TransportPort protectedServicePort;
 	ArrayList<IPv4Address> addressPool;
 	int connectionsThreshold;
+	boolean protectionEnabled = false;
 
 	/*// Test Initialization code
 	TransportPort protectedServicePort = TransportPort.of(80);
@@ -85,7 +86,6 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	// Statistics
 	HashMap<IPv4Address, HashSet<TransportPort>> connectionListHM =
 			new HashMap<IPv4Address, HashSet<TransportPort>>();
-	boolean protectionEnabled = true;
 
 	@Override
 	public void init(FloodlightModuleContext context) throws FloodlightModuleException {
