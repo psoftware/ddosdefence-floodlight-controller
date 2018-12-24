@@ -168,11 +168,12 @@ class ConsoleApp( Frame ):
 
 	menuStyle = { 'font': 'Geneva 7 bold' }
 
-	def __init__( self, net, parent=None, width=4 ):
+	def __init__( self, net, controllerRESTApi, parent=None, width=4 ):
 		Frame.__init__( self, parent )
 		self.top = self.winfo_toplevel()
 		self.top.title( 'Mininet' )
 		self.net = net
+		self.controllerRESTApi = controllerRESTApi
 		self.menubar = self.createMenuBar()
 		cframe = self.cframe = Frame( self )
 		self.consoles = {}  # consoles themselves
@@ -234,6 +235,7 @@ class ConsoleApp( Frame ):
 			( 'Switches', lambda: self.select( 'switches' ) ),
 			#( 'Controllers', lambda: self.select( 'controllers' ) ),
 			( 'StartTest', self.startbots ),
+			( 'EnableDDoSDefence', self.enableddosprotection),
 			( 'GetFlows', self.getflows ),
 			( 'Ping', self.ping ),
 			( 'Interrupt', self.stop ),
@@ -319,6 +321,22 @@ class ConsoleApp( Frame ):
 									+ "route add -net 0.0.0.0/32 dev " + interface_name + " &&"
 								+ "python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
 				client_address += 1;
+
+	def enableddosprotection( self ):
+		"Enable DDoS defence using Controller REST API and reset server to new address"
+		# TODO: REST request to get this address
+		result_code, new_address = controllerRESTApi.manage(enabled=True);
+		consoles = self.consoles[ 'hosts' ].consoles
+		for console in consoles:
+			interface_name = console.node.name + "-eth0";
+			if console.node.name.startswith("HTTPServer"):
+				console.handleInt();
+				console.waitOutput();
+				console.sendCmd(
+					"ip addr add " + new_address + " dev "+ interface_name + " && " +
+					"python server/MultithreadHTTPServer.py 7.7.7.1 80 " + new_address + " & " +
+					"python server/MultithreadHTTPServer.py " + new_address + " 80 \"<html>Standard page content</html>\""
+					);
 '''
 	def initdevices( self ):
 		"Init bots, clients and server"
@@ -337,6 +355,24 @@ class ConsoleApp( Frame ):
 def assign( obj, **kwargs ):
 	"Set a bunch of fields in an object."
 	obj.__dict__.update( kwargs )
+
+import requests
+class DDoSRESTInterface():
+	def init(self, port, threshold):
+		url = 'http://127.0.0.1:8080/ddosdefence/init/json'
+		data = '{"serviceport":' + str(port) + ',"addresses":["7.7.7.1","7.7.7.2","7.7.7.3","7.7.7.4"],"threshold":' + str(threshold) +'}'
+		response = requests.post(url, data=data)
+		print("DDoSRESTInterface.init(): got response code " + str(response.status_code) + " and response: " + response.text)
+	def manage(self, enabled):
+		url = 'http://127.0.0.1:8080/ddosdefence/manage/json'
+		if enabled:
+			data = '{"enabled":true}'
+		else:
+			data = '{"enabled":false}'
+		response = requests.post(url, data=data)
+		print("DDoSRESTInterface.manage(): got response code " + str(response.status_code) + " and response: " + response.text)
+		return response.status_code, response.text;
+
 
 class DDoSTestTopo(Topo):
 	"Single switch connected to n hosts."
@@ -375,6 +411,11 @@ if __name__ == '__main__':
 	#network = TreeNet( depth=2, fanout=4, controller=contr )
 	network = Mininet( topo=DDoSTestTopo(bots_n=8, client_n=3), controller=contr)
 	network.start()
-	app = ConsoleApp( network, width=4 )
+
+	# init controller
+	controllerRESTApi = DDoSRESTInterface();
+	controllerRESTApi.init(port=80, threshold=10);
+
+	app = ConsoleApp( network, controllerRESTApi, width=4 )
 	app.mainloop()
 	network.stop()
