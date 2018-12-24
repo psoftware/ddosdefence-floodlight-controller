@@ -61,23 +61,28 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	// L2 Switch table Interface
 	protected ILearningSwitchService learningSwitch;
 
-	// Parameters
-	// TODO: those must be initialized... maybe using REST?
+	// ====== Parameters ======
+	// Controller can be initialized only once
+	boolean initialized = false;
+	TransportPort protectedServicePort;
+	ArrayList<IPv4Address> addressPool;
+	int connectionsThreshold;
+
+	/*// Test Initialization code
 	TransportPort protectedServicePort = TransportPort.of(80);
 	ArrayList<IPv4Address> addressPool = new ArrayList<>(Arrays.asList(
 			IPv4Address.of("7.7.7.1"),
 			IPv4Address.of("7.7.7.2"),
 			IPv4Address.of("7.7.7.3"),
 			IPv4Address.of("7.7.7.4"),
-			IPv4Address.of("7.7.7.5")));
+			IPv4Address.of("7.7.7.5")));*/
 
-	// TODO: short impose a max of about 32,000 addresses
-	// which is about an half of a /16 subnet
-	short currentAddressIndex = 1;
+	// addressPool list is managed as a circular array.
+	// this index maintains a reference to the current HTTP server address
+	// (forwarded index, if existing, is the previous index, eventually wrapping)
+	int currentAddressIndex = 0;
 
 	// Statistics
-	// TODO: must be this initialized using REST?
-	final static int CONNECTIONS_THRESHOLD = 10;
 	HashMap<IPv4Address, HashSet<TransportPort>> connectionListHM =
 			new HashMap<IPv4Address, HashSet<TransportPort>>();
 	boolean protectionEnabled = true;
@@ -302,6 +307,11 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	@Override
 	public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
+		// This module requires some initialization data set by the HTTPServer.
+		// Don't continue if request has not been done
+		if(!initialized)
+			return Command.CONTINUE;
+
 		System.out.println("controller: Received new packet of type " + msg.getType().toString());
 
 		OFPacketIn pi = (OFPacketIn)msg;
@@ -358,7 +368,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		}
 
 		// if current client connections are higher than threshold, build a drop rule
-		if(connList != null && connList.size() > CONNECTIONS_THRESHOLD) {
+		if(connList != null && connList.size() > connectionsThreshold) {
 			// add a drop rule for the current client src address
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					ipv4Msg.getSourceAddress(), null,
@@ -394,6 +404,10 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 	@Override
 	public String setEnableProtection(boolean enabled) {
+		// DDoSDefence status cannot be changed while uninitialized
+		if(!initialized)
+			return "Error: Uninitialized controller";
+
 		protectionEnabled = enabled;
 
 		// if enabled, return next pool address
@@ -402,6 +416,28 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			return nextAddress().toString();
 		else
 			return getCurrentAddress().toString();
+	}
+
+	@Override
+	public boolean initProtection(ArrayList<IPv4Address> addresses, int servicePort, int threshold) {
+		if(initialized)
+			return false;
+
+		addressPool = addresses;
+		protectedServicePort = TransportPort.of(servicePort);
+		connectionsThreshold = threshold;
+
+		System.out.println("controller: initializing to protectedServicePort = " + protectedServicePort.toString()
+				+ " threshold = " + threshold);
+		System.out.println("controller: new address pool:");
+		for(IPv4Address ip : addresses)
+			System.out.println("\t\t\t" + ip.toString());
+		System.out.println("controller: set current address (index x) to " + addresses.get(currentAddressIndex).toString());
+
+		// this method must be called only one time at instance
+		initialized = true;
+
+		return true;
 	}
 
 	public class DDoSDefenceWebRoutable implements RestletRoutable {
@@ -413,12 +449,13 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			// controller summary stats REST resource
 			router.attach("/controller/summary/json", ControllerSummaryResource.class);
 			// loaded modules REST resource
-			router.attach("/module/loaded/json", LoadedModuleLoaderResource.class);
+			router.attach("/controller/modules/json", LoadedModuleLoaderResource.class);
 			// connected switches REST resource
-			router.attach("/module/loaded/json", ControllerSwitchesResource.class);
+			router.attach("/controller/switches/json", ControllerSwitchesResource.class);
 
 			// ==== Custom resources ====
-			router.attach("/defence/json", EnableDefenceResource.class);
+			router.attach("/init/json", InitDefenceResource.class);
+			router.attach("/manage/json", EnableDefenceResource.class);
 
 			return router;
 		}
