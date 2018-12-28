@@ -3,6 +3,7 @@ package net.floodlightcontroller.ddosdefence;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,8 +14,10 @@ import org.projectfloodlight.openflow.protocol.OFFlowDeleteStrict;
 import org.projectfloodlight.openflow.protocol.OFFlowMod;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
+import org.projectfloodlight.openflow.protocol.OFPacketOut;
 import org.projectfloodlight.openflow.protocol.OFType;
 import org.projectfloodlight.openflow.protocol.action.OFAction;
+import org.projectfloodlight.openflow.protocol.action.OFActionOutput;
 import org.projectfloodlight.openflow.protocol.action.OFActionSetField;
 import org.projectfloodlight.openflow.protocol.action.OFActions;
 import org.projectfloodlight.openflow.protocol.match.Match;
@@ -305,6 +308,25 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return fmb.build();
 	}
 
+	OFPacketOut forwardPacketIn(IOFSwitch sw, OFPacketIn pi, Ethernet eth) {
+		OFPacketOut.Builder pob = sw.getOFFactory().buildPacketOut();
+		pob.setBufferId(OFBufferId.NO_BUFFER);
+		pob.setInPort(OFPort.ANY);
+
+		// Create action -> send the packet back from the source port
+		OFActionOutput.Builder actionBuilder = sw.getOFFactory().actions().buildOutput();
+		OFPort outport = learningSwitch.getFromPortMap(sw, eth.getDestinationMACAddress(), null);
+		if(outport == null)
+			outport = OFPort.FLOOD;
+
+		actionBuilder.setPort(outport);
+
+		// Assign the action
+		pob.setActions(Collections.singletonList((OFAction) actionBuilder.build()));
+
+		return pob.build();
+	}
+
 	@Override
 	public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
 		// This module requires some initialization data set by the HTTPServer.
@@ -325,16 +347,25 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		IPv4 ipv4Msg = (IPv4)eth.getPayload();
 		TCP tcpMsg = (TCP)ipv4Msg.getPayload();
 
+		// Define a list of flow actions to send to the switch
+		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
+
 		// check if packet source is the protected server
 		if(isServerToClientPacket(ipv4Msg,tcpMsg)) {
 			System.out.println("controller: packet sent from the server to a client");
+
+			// do packet_out, forward packet following L2 switching
+			OFMessageList.add(forwardPacketIn(sw, pi, eth));
 
 			// create a new rule to allow the forwarding
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					ipv4Msg.getSourceAddress(), tcpMsg.getSourcePort(),
 					ipv4Msg.getDestinationAddress(),
 					false);
-			sw.write(fAdd);
+			OFMessageList.add(fAdd);
+
+			// send flow list to the switch
+			sw.write(OFMessageList);
 
 			// pipeline traversal can end here
 			return Command.STOP;
@@ -349,9 +380,6 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		IPv4Address requestedServerAddress = ipv4Msg.getDestinationAddress();
 		//TransportPort requestedServerPort = tcpMsg.getDestinationPort();
 		System.out.println("controller: packet sent from a client to the server");
-
-		// Define a list of flow actions to send to the switch
-		ArrayList<OFMessage> OFMessageList = new ArrayList<OFMessage>();
 
 		HashSet<TransportPort> connList = connectionListHM.get(clientAddress);
 		// if protectionEnabled, add current source port to the list for the current source address.
@@ -381,6 +409,10 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			OFMessageList.add(fAdd);
 
 		} else { // otherwise build a forward rule
+			// do packet_out
+			OFMessageList.add(forwardPacketIn(sw, pi, eth));
+
+			// add new flow
 			OFFlowAdd fAdd = buildFlowAdd(sw, pi, eth,
 					clientAddress, clientPort,
 					requestedServerAddress,
