@@ -46,6 +46,7 @@ import net.floodlightcontroller.core.web.ControllerSummaryResource;
 import net.floodlightcontroller.core.web.ControllerSwitchesResource;
 import net.floodlightcontroller.core.web.LoadedModuleLoaderResource;
 import net.floodlightcontroller.learningswitch.ILearningSwitchService;
+import net.floodlightcontroller.learningswitch.LearningSwitch;
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.TCP;
@@ -392,8 +393,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 			}
 
 			// Add the current source port to the list on if not present
-			boolean new_port_connection = connList.add(clientPort);
-			if(new_port_connection)
+			boolean isNewConnection = connList.add(clientPort);
+
+			if(isNewConnection)
 				System.out.println("controller: client " + clientAddress.toString()
 						+ " has now " + connList.size() + " connection count");
 			else
@@ -407,6 +409,10 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 					clientAddress, null,
 					requestedServerAddress, true);
 			OFMessageList.add(fAdd);
+
+			//remove all the connections of the dropped client from the connecion list
+			connectionListHM.remove(clientAddress);
+
 
 		} else { // otherwise build a forward rule
 			// do packet_out
