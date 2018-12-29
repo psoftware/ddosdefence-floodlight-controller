@@ -3,7 +3,7 @@
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
 while true; do
-	REQUEST_RESULT=$($SCRIPTPATH/gen_http_keepalive.sh | nc $1 $2 -w 2);
+	REQUEST_RESULT=$($SCRIPTPATH/gen_http_keepalive.sh | nc $1 $2 -w 4);
 	if [ $? -eq 1 ]; then
 		echo "Connection dropped or reached timeout"
 		continue;

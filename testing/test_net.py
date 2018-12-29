@@ -32,6 +32,8 @@ from mininet.log import setLogLevel
 from mininet.term import makeTerms, cleanUpScreens
 from mininet.util import quietRun
 
+import time
+
 class Console( Frame ):
 	"A simple console on a host."
 
@@ -300,8 +302,18 @@ class ConsoleApp( Frame ):
 
 	def startbots( self ):
 		"Start bots"
-		client_address = 1;
 		consoles = self.consoles[ 'hosts' ].consoles
+
+		# first start HTTPServer
+		for console in consoles:
+			if console.node.name.startswith("HTTPServer"):
+				console.sendCmd("python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
+
+		# wait for server to start
+		time.sleep(1);
+
+		# then start bots and clients
+		client_address = 1;
 		for console in consoles:
 			interface_name = console.node.name + "-eth0";
 			if console.node.name.startswith("Bot"):
@@ -309,9 +321,6 @@ class ConsoleApp( Frame ):
 				client_address += 1;
 			elif console.node.name.startswith("Client"):
 				console.sendCmd("./client/start_client.sh 7.7.7.1 80");
-				client_address += 1;
-			elif console.node.name.startswith("HTTPServer"):
-				console.sendCmd("python server/MultithreadHTTPServer.py 7.7.7.1 80 \"<html>Standard page content</html>\"");
 				client_address += 1;
 
 	def enableddosprotection( self ):

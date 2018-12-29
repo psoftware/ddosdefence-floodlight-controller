@@ -5,7 +5,7 @@ HTTPSERVER_ADDRESS=$1;
 HTTPSERVER_PORT=$2;
 
 while true; do
-	REQUEST_RESULT=$($SCRIPTPATH/gen_http_keepalive.sh | nc $HTTPSERVER_ADDRESS $HTTPSERVER_PORT -w 2);
+	REQUEST_RESULT=$($SCRIPTPATH/gen_http_keepalive.sh | nc $HTTPSERVER_ADDRESS $HTTPSERVER_PORT -w 4);
 	if [ $? -eq 1 ]; then
 		echo "Connection dropped or reached timeout"
 		continue;
