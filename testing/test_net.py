@@ -332,7 +332,10 @@ class ConsoleApp( Frame ):
 
 				# set new address, start forwarding server on new address
 				console.sendCmd(
+					"ip addr flush dev " + interface_name + " && " +
+					"ip addr add " + controllerRESTApi.oldAddress + "/24 dev "+ interface_name + " && " +
 					"ip addr add " + new_address + "/24 dev "+ interface_name + " && " +
+					"ip route add default dev " + interface_name + " && " +
 					"python server/MultithreadHTTPServer.py " + controllerRESTApi.oldAddress + " 80 " + new_address + " &"
 					);
 				console.waitOutput();
@@ -348,19 +351,19 @@ class ConsoleApp( Frame ):
 			console.waitOutput();
 			interface_name = console.node.name + "-eth0";
 			if console.node.name.startswith("Bot"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+				console.sendCmd("ip addr flush dev " + interface_name + " && " +
+									"ip addr add 80.80.80." + str(client_address) + "/24 dev " + interface_name + " && "
+									+ "ip route add default dev " + interface_name);
 				client_address += 1;
 			elif console.node.name.startswith("Client"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "80.80.80." + str(client_address) + " netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+				console.sendCmd("ip addr flush dev " + interface_name + " && " +
+									"ip addr add 80.80.80." + str(client_address) + "/24 dev " + interface_name + " && "
+									+ "ip route add default dev " + interface_name);
 				client_address += 1;
 			elif console.node.name.startswith("HTTPServer"):
-				console.sendCmd("ifconfig " + interface_name + " "
-									+ "7.7.7.1 netmask 255.255.255.0 && "
-									+ "route add -net 0.0.0.0/32 dev " + interface_name);
+				console.sendCmd("ip addr flush dev " + interface_name + " && " +
+									"ip addr add 7.7.7.1/24 dev " + interface_name +" && "
+									+ "ip route add default dev " + interface_name);
 
 
 # Make it easier to construct and assign objects
