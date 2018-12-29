@@ -137,6 +137,7 @@ class Console( Frame ):
 	def sendCmd( self, cmd ):
 		"Send a command to our node."
 		if not self.node.waiting:
+			print("sendCmd(" + cmd + ")")
 			self.node.sendCmd( cmd )
 
 	def handleReadable( self, _fds, timeoutms=None ):
@@ -325,7 +326,7 @@ class ConsoleApp( Frame ):
 				console.waitOutput();
 				console.sendCmd(
 					"ip addr add " + new_address + " dev "+ interface_name + " && " +
-					"python server/MultithreadHTTPServer.py 7.7.7.1 80 " + new_address + " & " +
+					"python server/MultithreadHTTPServer.py " + controllerRESTApi.oldAddress + " 80 " + new_address + " & " +
 					"python server/MultithreadHTTPServer.py " + new_address + " 80 \"<html>Standard page content</html>\""
 					);
 
@@ -360,6 +361,9 @@ def assign( obj, **kwargs ):
 
 import requests
 class DDoSRESTInterface():
+	def __init__(self):
+		self.currentAddress = "7.7.7.1"
+		self.oldAddress = "7.7.7.1"
 	def init(self, port, threshold):
 		url = 'http://127.0.0.1:8080/ddosdefence/init/json'
 		data = '{"serviceport":' + str(port) + ',"addresses":["7.7.7.1","7.7.7.2","7.7.7.3","7.7.7.4"],"threshold":' + str(threshold) +'}'
@@ -372,6 +376,10 @@ class DDoSRESTInterface():
 		else:
 			data = '{"enabled":false}'
 		response = requests.post(url, data=data)
+
+		self.oldAddress = self.currentAddress
+		self.currentAddress = response.text
+
 		print("DDoSRESTInterface.manage(): got response code " + str(response.status_code) + " and response: " + response.text)
 		return response.status_code, response.text;
 
