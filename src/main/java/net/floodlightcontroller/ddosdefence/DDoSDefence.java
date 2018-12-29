@@ -430,6 +430,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 				// Add OFDelete for (client_srcaddr:* -> D) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
 						clientAddress, getForwardingAddress()));
+				
 				// Add OFDelete for (D -> client_srcaddr:*) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
 						getForwardingAddress(), clientAddress));
@@ -455,10 +456,13 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 
 		// if enabled, return next pool address
 		// otherwise return current
-		if(enabled)
+		if(enabled){
+			connectionListHM.clear();
 			return nextAddress().toString();
-		else
+		}
+		else{
 			return getCurrentAddress().toString();
+		}
 	}
 
 	@Override
