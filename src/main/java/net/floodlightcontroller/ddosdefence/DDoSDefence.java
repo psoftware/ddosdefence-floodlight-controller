@@ -162,7 +162,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 	IPv4Address getForwardingAddress() {
 		if(!protectionEnabled)
 			return null;
-		int previousIndex = (short)((currentAddressIndex-1) % addressPool.size());
+		int previousIndex = (short)((currentAddressIndex + addressPool.size() - 1) % addressPool.size());
 		return addressPool.get(previousIndex);
 	}
 
