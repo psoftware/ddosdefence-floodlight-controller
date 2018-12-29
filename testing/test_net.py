@@ -138,7 +138,7 @@ class Console( Frame ):
 		"Send a command to our node."
 		if not self.node.waiting:
 			print("sendCmd(" + cmd + ")")
-			self.node.sendCmd( cmd )
+			self.node.sendCmd( "  " + cmd )
 
 	def handleReadable( self, _fds, timeoutms=None ):
 		"Handle file readable event."
@@ -322,13 +322,23 @@ class ConsoleApp( Frame ):
 		for console in consoles:
 			interface_name = console.node.name + "-eth0";
 			if console.node.name.startswith("HTTPServer"):
+				# kill current server
 				console.handleInt();
 				console.waitOutput();
+
+				# kill forwarding server
+				console.sendCmd("pkill -f 'python server/MultithreadHTTPServer.py*'");
+				console.waitOutput();
+
+				# set new address, start forwarding server on new address
 				console.sendCmd(
-					"ip addr add " + new_address + " dev "+ interface_name + " && " +
-					"python server/MultithreadHTTPServer.py " + controllerRESTApi.oldAddress + " 80 " + new_address + " & " +
-					"python server/MultithreadHTTPServer.py " + new_address + " 80 \"<html>Standard page content</html>\""
+					"ip addr add " + new_address + "/24 dev "+ interface_name + " && " +
+					"python server/MultithreadHTTPServer.py " + controllerRESTApi.oldAddress + " 80 " + new_address + " &"
 					);
+				console.waitOutput();
+
+				# start new normal http server
+				console.sendCmd("python server/MultithreadHTTPServer.py " + new_address + " 80 \"<html>Standard page content</html>\"")
 
 	def initdevices( self ):
 		"Init bots, clients and server"
