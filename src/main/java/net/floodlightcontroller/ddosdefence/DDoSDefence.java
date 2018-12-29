@@ -409,11 +409,6 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 					clientAddress, null,
 					requestedServerAddress, true);
 			OFMessageList.add(fAdd);
-
-			//remove all the connections of the dropped client from the connecion list
-			connectionListHM.remove(clientAddress);
-
-
 		} else { // otherwise build a forward rule
 			// do packet_out
 			OFMessageList.add(forwardPacketIn(sw, pi, eth));
@@ -434,6 +429,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 				// Add OFDelete for (D -> client_srcaddr:*) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
 						getForwardingAddress(), clientAddress));
+
+				// remove all the connections of the client from the connection list
+				connectionListHM.remove(clientAddress);
 			}
 
 			OFMessageList.add(fAdd);
