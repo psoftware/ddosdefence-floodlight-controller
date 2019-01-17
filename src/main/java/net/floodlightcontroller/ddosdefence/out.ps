@@ -1,0 +1,4132 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 18 36 594 756
+%%Title: Enscript Output
+%%Creator: GNU Enscript 1.6.5.90
+%%CreationDate: Thu Jan 17 15:32:20 2019
+%%Orientation: Landscape
+%%Pages: (atend)
+%%DocumentMedia: Letter 612 792 0 () ()
+%%DocumentNeededResources: (atend)
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset Enscript-Prolog 1.6.5 90
+%
+% Procedures.
+%
+
+/_S {	% save current state
+  /_s save def
+} def
+/_R {	% restore from saved state
+  _s restore
+} def
+
+/S {	% showpage protecting gstate
+  gsave
+  showpage
+  grestore
+} bind def
+
+/MF {	% fontname newfontname -> -	make a new encoded font
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  % insert only valid encoding vectors
+  encoding_vector length 256 eq {
+    newfont /Encoding encoding_vector put
+  } if
+
+  newfontname newfont definefont pop
+} def
+
+/MF_PS { % fontname newfontname -> -	make a new font preserving its enc
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  newfontname newfont definefont pop
+} def
+
+/SF { % fontname width height -> -	set a new font
+  /height exch def
+  /width exch def
+
+  findfont
+  [width 0 0 height 0 0] makefont setfont
+} def
+
+/SUF { % fontname width height -> -	set a new user font
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF
+  /F-gs-user-font width height SF
+} def
+
+/SUF_PS { % fontname width height -> -	set a new user font preserving its enc
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF_PS
+  /F-gs-user-font width height SF
+} def
+
+/M {moveto} bind def
+/s {show} bind def
+
+/Box {	% x y w h -> -			define box path
+  /d_h exch def /d_w exch def /d_y exch def /d_x exch def
+  d_x d_y  moveto
+  d_w 0 rlineto
+  0 d_h rlineto
+  d_w neg 0 rlineto
+  closepath
+} def
+
+/bgs {	% x y height blskip gray str -> -	show string with bg color
+  /str exch def
+  /gray exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    gray setgray
+    fill
+  grestore
+  x y M str s
+} def
+
+/bgcs { % x y height blskip red green blue str -> -  show string with bg color
+  /str exch def
+  /blue exch def
+  /green exch def
+  /red exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    red green blue setrgbcolor
+    fill
+  grestore
+  x y M str s
+} def
+
+% Highlight bars.
+/highlight_bars {	% nlines lineheight output_y_margin gray -> -
+  gsave
+    setgray
+    /ymarg exch def
+    /lineheight exch def
+    /nlines exch def
+
+    % This 2 is just a magic number to sync highlight lines to text.
+    0 d_header_y ymarg sub 2 sub translate
+
+    /cw d_output_w cols div def
+    /nrows d_output_h ymarg 2 mul sub lineheight div cvi def
+
+    % for each column
+    0 1 cols 1 sub {
+      cw mul /xp exch def
+
+      % for each rows
+      0 1 nrows 1 sub {
+        /rn exch def
+        rn lineheight mul neg /yp exch def
+        rn nlines idiv 2 mod 0 eq {
+	  % Draw highlight bar.  4 is just a magic indentation.
+	  xp 4 add yp cw 8 sub lineheight neg Box fill
+	} if
+      } for
+    } for
+
+  grestore
+} def
+
+% Line highlight bar.
+/line_highlight {	% x y width height gray -> -
+  gsave
+    /gray exch def
+    Box gray setgray fill
+  grestore
+} def
+
+% Column separator lines.
+/column_lines {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h translate
+    /cw d_output_w cols div def
+    1 1 cols 1 sub {
+      cw mul 0 moveto
+      0 d_output_h rlineto stroke
+    } for
+  grestore
+} def
+
+% Column borders.
+/column_borders {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h moveto
+    0 d_output_h rlineto
+    d_output_w 0 rlineto
+    0 d_output_h neg rlineto
+    closepath stroke
+  grestore
+} def
+
+% Do the actual underlay drawing
+/draw_underlay {
+  ul_style 0 eq {
+    ul_str true charpath stroke
+  } {
+    ul_str show
+  } ifelse
+} def
+
+% Underlay
+/underlay {	% - -> -
+  gsave
+    0 d_page_h translate
+    d_page_h neg d_page_w atan rotate
+
+    ul_gray setgray
+    ul_font setfont
+    /dw d_page_h dup mul d_page_w dup mul add sqrt def
+    ul_str stringwidth pop dw exch sub 2 div ul_h_ptsize -2 div moveto
+    draw_underlay
+  grestore
+} def
+
+/user_underlay {	% - -> -
+  gsave
+    ul_x ul_y translate
+    ul_angle rotate
+    ul_gray setgray
+    ul_font setfont
+    0 0 ul_h_ptsize 2 div sub moveto
+    draw_underlay
+  grestore
+} def
+
+% Page prefeed
+/page_prefeed {		% bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} def
+
+% Wrapped line markers
+/wrapped_line_mark {	% x y charwith charheight type -> -
+  /type exch def
+  /h exch def
+  /w exch def
+  /y exch def
+  /x exch def
+
+  type 2 eq {
+    % Black boxes (like TeX does)
+    gsave
+      0 setlinewidth
+      x w 4 div add y M
+      0 h rlineto w 2 div 0 rlineto 0 h neg rlineto
+      closepath fill
+    grestore
+  } {
+    type 3 eq {
+      % Small arrows
+      gsave
+        .2 setlinewidth
+        x w 2 div add y h 2 div add M
+        w 4 div 0 rlineto
+        x w 4 div add y lineto stroke
+
+        x w 4 div add w 8 div add y h 4 div add M
+        x w 4 div add y lineto
+	w 4 div h 8 div rlineto stroke
+      grestore
+    } {
+      % do nothing
+    } ifelse
+  } ifelse
+} def
+
+% EPSF import.
+
+/BeginEPSF {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack
+  userdict begin
+  /showpage { } def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+
+/EndEPSF {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+%%EndResource
+%%BeginResource: procset Enscript-Encoding-88591 1.6.5 90
+/encoding_vector [
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclam       	/quotedbl     	/numbersign   	
+/dollar       	/percent      	/ampersand    	/quoteright   	
+/parenleft    	/parenright   	/asterisk     	/plus         	
+/comma        	/hyphen       	/period       	/slash        	
+/zero         	/one          	/two          	/three        	
+/four         	/five         	/six          	/seven        	
+/eight        	/nine         	/colon        	/semicolon    	
+/less         	/equal        	/greater      	/question     	
+/at           	/A            	/B            	/C            	
+/D            	/E            	/F            	/G            	
+/H            	/I            	/J            	/K            	
+/L            	/M            	/N            	/O            	
+/P            	/Q            	/R            	/S            	
+/T            	/U            	/V            	/W            	
+/X            	/Y            	/Z            	/bracketleft  	
+/backslash    	/bracketright 	/asciicircum  	/underscore   	
+/quoteleft    	/a            	/b            	/c            	
+/d            	/e            	/f            	/g            	
+/h            	/i            	/j            	/k            	
+/l            	/m            	/n            	/o            	
+/p            	/q            	/r            	/s            	
+/t            	/u            	/v            	/w            	
+/x            	/y            	/z            	/braceleft    	
+/bar          	/braceright   	/tilde        	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclamdown   	/cent         	/sterling     	
+/currency     	/yen          	/brokenbar    	/section      	
+/dieresis     	/copyright    	/ordfeminine  	/guillemotleft	
+/logicalnot   	/hyphen       	/registered   	/macron       	
+/degree       	/plusminus    	/twosuperior  	/threesuperior	
+/acute        	/mu           	/paragraph    	/bullet       	
+/cedilla      	/onesuperior  	/ordmasculine 	/guillemotright	
+/onequarter   	/onehalf      	/threequarters	/questiondown 	
+/Agrave       	/Aacute       	/Acircumflex  	/Atilde       	
+/Adieresis    	/Aring        	/AE           	/Ccedilla     	
+/Egrave       	/Eacute       	/Ecircumflex  	/Edieresis    	
+/Igrave       	/Iacute       	/Icircumflex  	/Idieresis    	
+/Eth          	/Ntilde       	/Ograve       	/Oacute       	
+/Ocircumflex  	/Otilde       	/Odieresis    	/multiply     	
+/Oslash       	/Ugrave       	/Uacute       	/Ucircumflex  	
+/Udieresis    	/Yacute       	/Thorn        	/germandbls   	
+/agrave       	/aacute       	/acircumflex  	/atilde       	
+/adieresis    	/aring        	/ae           	/ccedilla     	
+/egrave       	/eacute       	/ecircumflex  	/edieresis    	
+/igrave       	/iacute       	/icircumflex  	/idieresis    	
+/eth          	/ntilde       	/ograve       	/oacute       	
+/ocircumflex  	/otilde       	/odieresis    	/divide       	
+/oslash       	/ugrave       	/uacute       	/ucircumflex  	
+/udieresis    	/yacute       	/thorn        	/ydieresis    	
+] def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier
+/HFpt_w 10 def
+/HFpt_h 10 def
+/Courier-Bold /HF-gs-font MF
+/HF /HF-gs-font findfont [HFpt_w 0 0 HFpt_h 0 0] makefont def
+/Courier /F-gs-font MF
+/F-gs-font 7 7 SF
+/#copies 1 def
+% Pagedevice definitions:
+gs_languagelevel 1 gt {
+  <<
+    /PageSize [612 792] 
+  >> setpagedevice
+} if
+%%BeginResource: procset Enscript-Header-enscript 1.6.5 90
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Roman
+
+% Fonts.
+/Times-Bold /HeaderFont-Bold MF
+/HeaderDateF /HeaderFont-Bold findfont 12 scalefont def
+
+/Times-Roman /HeaderFont-Times MF
+/HeaderHDRF /HeaderFont-Times findfont 14 scalefont def
+
+/HeaderPageNumF /Helvetica-Bold findfont 28.8 scalefont def
+
+/do_header {	% print enscript header
+  gsave
+    d_header_x d_header_y translate
+
+    % light bar
+    0 0 d_header_w d_header_h 2 div Box
+    .95 setgray fill
+
+    % dark gray boxes
+    /dbw d_header_h 2 mul def	% dark box width
+    /dbc .7 def			% dark box color
+
+    % left dark box.
+    0 0 dbw d_header_h Box
+    dbc setgray fill
+
+    0 setgray 
+    HeaderDateF setfont
+    moddatestr dup stringwidth pop dbw exch sub 2 div 
+    d_header_h 2 div 2 add moveto show
+    modtimestr dup stringwidth pop dbw exch sub 2 div 
+    d_header_h 5 div moveto show
+
+    % right dark box
+    d_header_w dbw sub 0 dbw d_header_h Box
+    dbc setgray fill
+
+    HeaderPageNumF setfont
+    1 setgray
+    pagenumstr dup
+    stringwidth pop dbw exch sub 2 div d_header_w dbw sub add
+    d_header_h .2 mul moveto show
+
+    % filename
+    0 setgray 
+    HeaderHDRF setfont
+    d_header_w fname stringwidth pop sub 2 div d_header_h 8 div moveto
+    fname show
+
+    % user supplied header string.
+    user_header_p {
+      /h d_header_h 8 div 5 mul def
+
+      % Implement strict enscript compatibility.
+      user_header_center_str () eq user_header_right_str () eq and {
+        d_header_w user_header_left_str stringwidth pop sub 2 div 
+        h moveto user_header_left_str show
+      } {
+        dbw 5 add h moveto user_header_left_str show
+
+        d_header_w user_header_center_str stringwidth pop sub 2 div 
+        h moveto user_header_center_str show
+
+	d_header_w dbw sub 5 sub user_header_right_str stringwidth pop
+	sub h moveto user_header_right_str show
+      } ifelse
+    } if
+
+  grestore
+} def
+%%EndResource
+/d_page_w 720 def
+/d_page_h 576 def
+/d_header_x 0 def
+/d_header_y 540 def
+/d_header_w 720 def
+/d_header_h 36 def
+/d_footer_x 0 def
+/d_footer_y 0 def
+/d_footer_w 720 def
+/d_footer_h 0 def
+/d_output_w 720 def
+/d_output_h 540 def
+/cols 2 def
+%%EndSetup
+%%Page: (1) 1
+%%BeginPageSetup
+_S
+90 rotate
+36 -594 translate
+/pagenum 1 def
+/fname (DDosDefence.java) def
+/fdir (.) def
+/ftail (DDosDefence.java) def
+% User defined strings:
+/pagenumstr (1) def
+/moddatestr (12/30/18) def
+/modtimestr (13:28:07) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+column_lines
+do_header
+22.8 530 M (1:) s
+/Courier-Bold 7 7 SUF
+35.4 530 M
+(package) s
+/F-gs-font 7 7 SF
+64.8 530 M
+( net.floodlightcontroller.ddosdefence;) s
+22.8 522 M (2:) s
+22.8 514 M (3:) s
+/Courier-Bold 7 7 SUF
+35.4 514 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 514 M
+( java.util.ArrayList;) s
+22.8 506 M (4:) s
+/Courier-Bold 7 7 SUF
+35.4 506 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 506 M
+( java.util.Arrays;) s
+22.8 498 M (5:) s
+/Courier-Bold 7 7 SUF
+35.4 498 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 498 M
+( java.util.Collection;) s
+22.8 490 M (6:) s
+/Courier-Bold 7 7 SUF
+35.4 490 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 490 M
+( java.util.Collections;) s
+22.8 482 M (7:) s
+/Courier-Bold 7 7 SUF
+35.4 482 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 482 M
+( java.util.HashMap;) s
+22.8 474 M (8:) s
+/Courier-Bold 7 7 SUF
+35.4 474 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 474 M
+( java.util.HashSet;) s
+22.8 466 M (9:) s
+/Courier-Bold 7 7 SUF
+35.4 466 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 466 M
+( java.util.Map;) s
+18.6 458 M (10:) s
+18.6 450 M (11:) s
+/Courier-Bold 7 7 SUF
+35.4 450 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 450 M
+( org.projectfloodlight.openflow.protocol.OFFlowAdd;) s
+18.6 442 M (12:) s
+/Courier-Bold 7 7 SUF
+35.4 442 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 442 M
+( org.projectfloodlight.openflow.protocol.OFFlowDelete;) s
+18.6 434 M (13:) s
+/Courier-Bold 7 7 SUF
+35.4 434 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 434 M
+( org.projectfloodlight.openflow.protocol.OFFlowDeleteStrict;) s
+18.6 426 M (14:) s
+/Courier-Bold 7 7 SUF
+35.4 426 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 426 M
+( org.projectfloodlight.openflow.protocol.OFFlowMod;) s
+18.6 418 M (15:) s
+/Courier-Bold 7 7 SUF
+35.4 418 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 418 M
+( org.projectfloodlight.openflow.protocol.OFMessage;) s
+18.6 410 M (16:) s
+/Courier-Bold 7 7 SUF
+35.4 410 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 410 M
+( org.projectfloodlight.openflow.protocol.OFPacketIn;) s
+18.6 402 M (17:) s
+/Courier-Bold 7 7 SUF
+35.4 402 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 402 M
+( org.projectfloodlight.openflow.protocol.OFPacketOut;) s
+18.6 394 M (18:) s
+/Courier-Bold 7 7 SUF
+35.4 394 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 394 M
+( org.projectfloodlight.openflow.protocol.OFType;) s
+18.6 386 M (19:) s
+/Courier-Bold 7 7 SUF
+35.4 386 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 386 M
+( org.projectfloodlight.openflow.protocol.action.OFAction;) s
+18.6 378 M (20:) s
+/Courier-Bold 7 7 SUF
+35.4 378 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 378 M
+( org.projectfloodlight.openflow.protocol.action.OFActionOutput;) s
+18.6 370 M (21:) s
+/Courier-Bold 7 7 SUF
+35.4 370 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 370 M
+( org.projectfloodlight.openflow.protocol.action.OFActionSetField;) s
+18.6 362 M (22:) s
+/Courier-Bold 7 7 SUF
+35.4 362 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 362 M
+( org.projectfloodlight.openflow.protocol.action.OFActions;) s
+18.6 354 M (23:) s
+/Courier-Bold 7 7 SUF
+35.4 354 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 354 M
+( org.projectfloodlight.openflow.protocol.match.Match;) s
+18.6 346 M (24:) s
+/Courier-Bold 7 7 SUF
+35.4 346 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 346 M
+( org.projectfloodlight.openflow.protocol.match.MatchField;) s
+18.6 338 M (25:) s
+/Courier-Bold 7 7 SUF
+35.4 338 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 338 M
+( org.projectfloodlight.openflow.protocol.oxm.OFOxms;) s
+18.6 330 M (26:) s
+/Courier-Bold 7 7 SUF
+35.4 330 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 330 M
+( org.projectfloodlight.openflow.types.EthType;) s
+18.6 322 M (27:) s
+/Courier-Bold 7 7 SUF
+35.4 322 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 322 M
+( org.projectfloodlight.openflow.types.IPv4Address;) s
+18.6 314 M (28:) s
+/Courier-Bold 7 7 SUF
+35.4 314 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 314 M
+( org.projectfloodlight.openflow.types.IpProtocol;) s
+18.6 306 M (29:) s
+/Courier-Bold 7 7 SUF
+35.4 306 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 306 M
+( org.projectfloodlight.openflow.types.OFBufferId;) s
+18.6 298 M (30:) s
+/Courier-Bold 7 7 SUF
+35.4 298 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 298 M
+( org.projectfloodlight.openflow.types.OFPort;) s
+18.6 290 M (31:) s
+/Courier-Bold 7 7 SUF
+35.4 290 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 290 M
+( org.projectfloodlight.openflow.types.TransportPort;) s
+18.6 282 M (32:) s
+/Courier-Bold 7 7 SUF
+35.4 282 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 282 M
+( org.projectfloodlight.openflow.types.U64;) s
+18.6 274 M (33:) s
+/Courier-Bold 7 7 SUF
+35.4 274 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 274 M
+( org.restlet.Context;) s
+18.6 266 M (34:) s
+/Courier-Bold 7 7 SUF
+35.4 266 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 266 M
+( org.restlet.Restlet;) s
+18.6 258 M (35:) s
+/Courier-Bold 7 7 SUF
+35.4 258 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 258 M
+( org.restlet.routing.Router;) s
+18.6 250 M (36:) s
+18.6 242 M (37:) s
+/Courier-Bold 7 7 SUF
+35.4 242 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 242 M
+( net.floodlightcontroller.core.FloodlightContext;) s
+18.6 234 M (38:) s
+/Courier-Bold 7 7 SUF
+35.4 234 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 234 M
+( net.floodlightcontroller.core.IFloodlightProviderService;) s
+18.6 226 M (39:) s
+/Courier-Bold 7 7 SUF
+35.4 226 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 226 M
+( net.floodlightcontroller.core.IOFMessageListener;) s
+18.6 218 M (40:) s
+/Courier-Bold 7 7 SUF
+35.4 218 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 218 M
+( net.floodlightcontroller.core.IOFSwitch;) s
+18.6 210 M (41:) s
+/Courier-Bold 7 7 SUF
+35.4 210 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 210 M
+( net.floodlightcontroller.core.module.FloodlightModuleContext;) s
+18.6 202 M (42:) s
+/Courier-Bold 7 7 SUF
+35.4 202 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 202 M
+( net.floodlightcontroller.core.module.FloodlightModuleException;) s
+18.6 194 M (43:) s
+/Courier-Bold 7 7 SUF
+35.4 194 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 194 M
+( net.floodlightcontroller.core.module.IFloodlightModule;) s
+18.6 186 M (44:) s
+/Courier-Bold 7 7 SUF
+35.4 186 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 186 M
+( net.floodlightcontroller.core.module.IFloodlightService;) s
+18.6 178 M (45:) s
+/Courier-Bold 7 7 SUF
+35.4 178 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 178 M
+( net.floodlightcontroller.core.web.ControllerSummaryResource;) s
+18.6 170 M (46:) s
+/Courier-Bold 7 7 SUF
+35.4 170 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 170 M
+( net.floodlightcontroller.core.web.ControllerSwitchesResource;) s
+18.6 162 M (47:) s
+/Courier-Bold 7 7 SUF
+35.4 162 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 162 M
+( net.floodlightcontroller.core.web.LoadedModuleLoaderResource;) s
+18.6 154 M (48:) s
+/Courier-Bold 7 7 SUF
+35.4 154 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 154 M
+( net.floodlightcontroller.learningswitch.ILearningSwitchService;) s
+18.6 146 M (49:) s
+/Courier-Bold 7 7 SUF
+35.4 146 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 146 M
+( net.floodlightcontroller.learningswitch.LearningSwitch;) s
+18.6 138 M (50:) s
+/Courier-Bold 7 7 SUF
+35.4 138 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 138 M
+( net.floodlightcontroller.packet.Ethernet;) s
+18.6 130 M (51:) s
+/Courier-Bold 7 7 SUF
+35.4 130 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 130 M
+( net.floodlightcontroller.packet.IPv4;) s
+18.6 122 M (52:) s
+/Courier-Bold 7 7 SUF
+35.4 122 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 122 M
+( net.floodlightcontroller.packet.TCP;) s
+18.6 114 M (53:) s
+/Courier-Bold 7 7 SUF
+35.4 114 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 114 M
+( net.floodlightcontroller.restserver.IRestApiService;) s
+18.6 106 M (54:) s
+/Courier-Bold 7 7 SUF
+35.4 106 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 106 M
+( net.floodlightcontroller.restserver.RestletRoutable;) s
+18.6 98 M (55:) s
+/Courier-Bold 7 7 SUF
+35.4 98 M
+(import) s
+/F-gs-font 7 7 SF
+60.6 98 M
+( net.floodlightcontroller.util.FlowModUtils;) s
+18.6 90 M (56:) s
+18.6 82 M (57:) s
+/Courier-Bold 7 7 SUF
+35.4 82 M
+(public) s
+/F-gs-font 7 7 SF
+60.6 82 M
+( ) s
+/Courier-Bold 7 7 SUF
+64.8 82 M
+(class) s
+/F-gs-font 7 7 SF
+85.8 82 M
+( DDoSDefence ) s
+/Courier-Bold 7 7 SUF
+140.4 82 M
+(implements) s
+/F-gs-font 7 7 SF
+182.4 82 M
+( IOFMessageListener,IFloodlightModule,IDD) s
+5 74 M
+(oSDefenceREST {) s
+18.6 66 M (58:) s
+35.4 66 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 66 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 66 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 66 M
+(static) s
+/F-gs-font 7 7 SF
+123.6 66 M
+( ) s
+/Courier-Bold 7 7 SUF
+127.8 66 M
+(final) s
+/F-gs-font 7 7 SF
+148.8 66 M
+( ) s
+/Courier-Bold 7 7 SUF
+153 66 M
+(int) s
+/F-gs-font 7 7 SF
+165.6 66 M
+( DDOSDEFENCE_APP_ID = 1;) s
+18.6 58 M (59:) s
+18.6 50 M (60:) s
+35.4 50 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 50 M
+(protected) s
+/F-gs-font 7 7 SF
+106.8 50 M
+( IFloodlightProviderService floodlightProvider;) s
+18.6 42 M (61:) s
+35.4 42 M
+(        ) s
+18.6 34 M (62:) s
+35.4 34 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+69 34 M
+(// REST Interface) s
+/F-gs-font 7 7 SF
+18.6 26 M (63:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 26 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 26 M
+(protected) s
+/F-gs-font 7 7 SF
+106.8 26 M
+( IRestApiService restApiService;) s
+18.6 18 M (64:) s
+18.6 10 M (65:) s
+35.4 10 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+69 10 M
+(// L2 Switch table Interface) s
+/F-gs-font 7 7 SF
+18.6 2 M (66:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 2 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 2 M
+(protected) s
+/F-gs-font 7 7 SF
+106.8 2 M
+( ILearningSwitchService learningSwitch;) s
+378.6 530 M (67:) s
+378.6 522 M (68:) s
+395.4 522 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 522 M
+(// ====== Parameters ======) s
+/F-gs-font 7 7 SF
+378.6 514 M (69:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 514 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 514 M
+(// Controller can be initialized only once) s
+/F-gs-font 7 7 SF
+378.6 506 M (70:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 506 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 506 M
+(boolean) s
+/F-gs-font 7 7 SF
+458.4 506 M
+( initialized = ) s
+/Courier-Bold 7 7 SUF
+521.4 506 M
+(false) s
+/F-gs-font 7 7 SF
+542.4 506 M
+(;) s
+378.6 498 M (71:) s
+395.4 498 M
+(        TransportPort protectedServicePort;) s
+378.6 490 M (72:) s
+395.4 490 M
+(        ArrayList<IPv4Address> addressPool;) s
+378.6 482 M (73:) s
+395.4 482 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 482 M
+(int) s
+/F-gs-font 7 7 SF
+441.6 482 M
+( connectionsThreshold;) s
+378.6 474 M (74:) s
+395.4 474 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 474 M
+(boolean) s
+/F-gs-font 7 7 SF
+458.4 474 M
+( protectionEnabled = ) s
+/Courier-Bold 7 7 SUF
+546.6 474 M
+(false) s
+/F-gs-font 7 7 SF
+567.6 474 M
+(;) s
+378.6 466 M (75:) s
+378.6 458 M (76:) s
+395.4 458 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 458 M
+(/*// Test Initialization code) s
+/F-gs-font 7 7 SF
+378.6 450 M (77:) s
+/Courier-Oblique 7 7 SUF
+395.4 450 M
+(        TransportPort protectedServicePort = TransportPort.of\(80\);) s
+/F-gs-font 7 7 SF
+378.6 442 M (78:) s
+/Courier-Oblique 7 7 SUF
+395.4 442 M
+(        ArrayList<IPv4Address> addressPool = new ArrayList<>\(Arrays.asList\() s
+/F-gs-font 7 7 SF
+378.6 434 M (79:) s
+/Courier-Oblique 7 7 SUF
+395.4 434 M
+(                        IPv4Address.of\("7.7.7.1"\),) s
+/F-gs-font 7 7 SF
+378.6 426 M (80:) s
+/Courier-Oblique 7 7 SUF
+395.4 426 M
+(                        IPv4Address.of\("7.7.7.2"\),) s
+/F-gs-font 7 7 SF
+378.6 418 M (81:) s
+/Courier-Oblique 7 7 SUF
+395.4 418 M
+(                        IPv4Address.of\("7.7.7.3"\),) s
+/F-gs-font 7 7 SF
+378.6 410 M (82:) s
+/Courier-Oblique 7 7 SUF
+395.4 410 M
+(                        IPv4Address.of\("7.7.7.4"\),) s
+/F-gs-font 7 7 SF
+378.6 402 M (83:) s
+/Courier-Oblique 7 7 SUF
+395.4 402 M
+(                        IPv4Address.of\("7.7.7.5"\)\)\);*/) s
+/F-gs-font 7 7 SF
+378.6 394 M (84:) s
+378.6 386 M (85:) s
+395.4 386 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 386 M
+(// addressPool list is managed as a circular array.) s
+/F-gs-font 7 7 SF
+378.6 378 M (86:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 378 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 378 M
+(// this index maintains a reference to the current HTTP server addre) s
+365 370 M
+(ss) s
+/F-gs-font 7 7 SF
+378.6 362 M (87:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 362 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 362 M
+(// \(forwarded index, if existing, is the previous index, eventually ) s
+365 354 M
+(wrapping\)) s
+/F-gs-font 7 7 SF
+378.6 346 M (88:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 346 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 346 M
+(int) s
+/F-gs-font 7 7 SF
+441.6 346 M
+( currentAddressIndex = 0;) s
+378.6 338 M (89:) s
+378.6 330 M (90:) s
+395.4 330 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 330 M
+(// Statistics) s
+/F-gs-font 7 7 SF
+378.6 322 M (91:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 322 M
+(        HashMap<IPv4Address, HashSet<TransportPort>> connectionListHM =) s
+378.6 314 M (92:) s
+395.4 314 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 314 M
+(new) s
+/F-gs-font 7 7 SF
+508.8 314 M
+( HashMap<IPv4Address, HashSet<TransportPort>>\(\);) s
+378.6 306 M (93:) s
+378.6 298 M (94:) s
+395.4 298 M
+(        @Override) s
+378.6 290 M (95:) s
+395.4 290 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 290 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 290 M
+( ) s
+/Courier-Bold 7 7 SUF
+458.4 290 M
+(void) s
+/F-gs-font 7 7 SF
+475.2 290 M
+( init\(FloodlightModuleContext context\) ) s
+/Courier-Bold 7 7 SUF
+639 290 M
+(throws) s
+/F-gs-font 7 7 SF
+664.2 290 M
+( FloodlightM) s
+365 282 M
+(oduleException {) s
+378.6 274 M (96:) s
+395.4 274 M
+(                floodlightProvider = context.getServiceImpl\(IFloodlightProvi) s
+365 266 M
+(derService.) s
+/Courier-Bold 7 7 SUF
+411.2 266 M
+(class) s
+/F-gs-font 7 7 SF
+432.2 266 M
+(\);) s
+378.6 258 M (97:) s
+395.4 258 M
+(                restApiService = context.getServiceImpl\(IRestApiService.) s
+/Courier-Bold 7 7 SUF
+697.8 258 M
+(clas) s
+365 250 M
+(s) s
+/F-gs-font 7 7 SF
+369.2 250 M
+(\);) s
+378.6 242 M (98:) s
+395.4 242 M
+(                learningSwitch = context.getServiceImpl\(ILearningSwitchServi) s
+365 234 M
+(ce.) s
+/Courier-Bold 7 7 SUF
+377.6 234 M
+(class) s
+/F-gs-font 7 7 SF
+398.6 234 M
+(\);) s
+378.6 226 M (99:) s
+395.4 226 M
+(        }) s
+374.4 218 M (100:) s
+395.4 218 M
+(        ) s
+374.4 210 M (101:) s
+395.4 210 M
+(        @Override) s
+374.4 202 M (102:) s
+395.4 202 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 202 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 202 M
+( Collection<Class<? ) s
+/Courier-Bold 7 7 SUF
+538.2 202 M
+(extends) s
+/F-gs-font 7 7 SF
+567.6 202 M
+( IFloodlightService>> getModuleDepe) s
+365 194 M
+(ndencies\(\) {) s
+374.4 186 M (103:) s
+395.4 186 M
+(                Collection<Class<? ) s
+/Courier-Bold 7 7 SUF
+542.4 186 M
+(extends) s
+/F-gs-font 7 7 SF
+571.8 186 M
+( IFloodlightService>> l =) s
+374.4 178 M (104:) s
+395.4 178 M
+(                                ) s
+/Courier-Bold 7 7 SUF
+529.8 178 M
+(new) s
+/F-gs-font 7 7 SF
+542.4 178 M
+( ArrayList<Class<? ) s
+/Courier-Bold 7 7 SUF
+622.2 178 M
+(extends) s
+/F-gs-font 7 7 SF
+651.6 178 M
+( IFloodlightSer) s
+365 170 M
+(vice>>\(\);) s
+374.4 162 M (105:) s
+395.4 162 M
+(                l.add\(IRestApiService.) s
+/Courier-Bold 7 7 SUF
+555 162 M
+(class) s
+/F-gs-font 7 7 SF
+576 162 M
+(\);) s
+374.4 154 M (106:) s
+395.4 154 M
+(                l.add\(ILearningSwitchService.) s
+/Courier-Bold 7 7 SUF
+584.4 154 M
+(class) s
+/F-gs-font 7 7 SF
+605.4 154 M
+(\);) s
+374.4 146 M (107:) s
+395.4 146 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 146 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 146 M
+( l;) s
+374.4 138 M (108:) s
+395.4 138 M
+(        }) s
+374.4 130 M (109:) s
+374.4 122 M (110:) s
+395.4 122 M
+(        @Override) s
+374.4 114 M (111:) s
+395.4 114 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 114 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 114 M
+( Collection<Class<? ) s
+/Courier-Bold 7 7 SUF
+538.2 114 M
+(extends) s
+/F-gs-font 7 7 SF
+567.6 114 M
+( IFloodlightService>> getModuleServ) s
+365 106 M
+(ices\(\) {) s
+374.4 98 M (112:) s
+395.4 98 M
+(                Collection<Class<? ) s
+/Courier-Bold 7 7 SUF
+542.4 98 M
+(extends) s
+/F-gs-font 7 7 SF
+571.8 98 M
+( IFloodlightService>> l =) s
+374.4 90 M (113:) s
+395.4 90 M
+(                                ) s
+/Courier-Bold 7 7 SUF
+529.8 90 M
+(new) s
+/F-gs-font 7 7 SF
+542.4 90 M
+( ArrayList<Class<? ) s
+/Courier-Bold 7 7 SUF
+622.2 90 M
+(extends) s
+/F-gs-font 7 7 SF
+651.6 90 M
+( IFloodlightSer) s
+365 82 M
+(vice>>\(\);) s
+374.4 74 M (114:) s
+395.4 74 M
+(                l.add\(IDDoSDefenceREST.) s
+/Courier-Bold 7 7 SUF
+559.2 74 M
+(class) s
+/F-gs-font 7 7 SF
+580.2 74 M
+(\);) s
+374.4 66 M (115:) s
+395.4 66 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 66 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 66 M
+( l;) s
+374.4 58 M (116:) s
+395.4 58 M
+(        }) s
+374.4 50 M (117:) s
+374.4 42 M (118:) s
+395.4 42 M
+(        @Override) s
+374.4 34 M (119:) s
+395.4 34 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 34 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 34 M
+( Map<Class<? ) s
+/Courier-Bold 7 7 SUF
+508.8 34 M
+(extends) s
+/F-gs-font 7 7 SF
+538.2 34 M
+( IFloodlightService>, IFloodlightService> ) s
+365 26 M
+(getServiceImpls\(\) {) s
+374.4 18 M (120:) s
+395.4 18 M
+(                Map<Class<? ) s
+/Courier-Bold 7 7 SUF
+513 18 M
+(extends) s
+/F-gs-font 7 7 SF
+542.4 18 M
+( IFloodlightService>, IFloodlightService>) s
+365 10 M
+( m =) s
+374.4 2 M (121:) s
+395.4 2 M
+(                                ) s
+/Courier-Bold 7 7 SUF
+529.8 2 M
+(new) s
+/F-gs-font 7 7 SF
+542.4 2 M
+( HashMap<Class<? ) s
+/Courier-Bold 7 7 SUF
+613.8 2 M
+(extends) s
+/F-gs-font 7 7 SF
+643.2 2 M
+( IFloodlightServi) s
+_R
+S
+%%Page: (2) 2
+%%BeginPageSetup
+_S
+90 rotate
+36 -594 translate
+/pagenum 2 def
+/fname (DDosDefence.java) def
+/fdir (.) def
+/ftail (DDosDefence.java) def
+% User defined strings:
+/pagenumstr (2) def
+/moddatestr (12/30/18) def
+/modtimestr (13:28:07) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+column_lines
+do_header
+5 530 M
+(ce>, IFloodlightService>\(\);) s
+14.4 522 M (122:) s
+35.4 522 M
+(                m.put\(IDDoSDefenceREST.) s
+/Courier-Bold 7 7 SUF
+199.2 522 M
+(class) s
+/F-gs-font 7 7 SF
+220.2 522 M
+(, ) s
+/Courier-Bold 7 7 SUF
+228.6 522 M
+(this) s
+/F-gs-font 7 7 SF
+245.4 522 M
+(\);) s
+14.4 514 M (123:) s
+35.4 514 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 514 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 514 M
+( m;) s
+14.4 506 M (124:) s
+35.4 506 M
+(        }) s
+14.4 498 M (125:) s
+14.4 490 M (126:) s
+35.4 490 M
+(        @Override) s
+14.4 482 M (127:) s
+35.4 482 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 482 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 482 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 482 M
+(void) s
+/F-gs-font 7 7 SF
+115.2 482 M
+( startUp\(FloodlightModuleContext context\) ) s
+/Courier-Bold 7 7 SUF
+291.6 482 M
+(throws) s
+/F-gs-font 7 7 SF
+316.8 482 M
+( Floodlig) s
+5 474 M
+(htModuleException {) s
+14.4 466 M (128:) s
+35.4 466 M
+(                floodlightProvider.addOFMessageListener\(OFType.PACKET_IN, ) s
+/Courier-Bold 7 7 SUF
+346.2 466 M
+(th) s
+5 458 M
+(is) s
+/F-gs-font 7 7 SF
+13.4 458 M
+(\);) s
+14.4 450 M (129:) s
+35.4 450 M
+(                restApiService.addRestletRoutable\() s
+/Courier-Bold 7 7 SUF
+245.4 450 M
+(new) s
+/F-gs-font 7 7 SF
+258 450 M
+( DDoSDefenceWebRoutable) s
+5 442 M
+(\(\)\);) s
+14.4 434 M (130:) s
+35.4 434 M
+(        }) s
+14.4 426 M (131:) s
+14.4 418 M (132:) s
+35.4 418 M
+(        @Override) s
+14.4 410 M (133:) s
+35.4 410 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 410 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 410 M
+( String getName\(\) {) s
+14.4 402 M (134:) s
+35.4 402 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 402 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 402 M
+( DDoSDefence.) s
+/Courier-Bold 7 7 SUF
+182.4 402 M
+(class) s
+/F-gs-font 7 7 SF
+203.4 402 M
+(.getSimpleName\(\);) s
+14.4 394 M (135:) s
+35.4 394 M
+(        }) s
+14.4 386 M (136:) s
+14.4 378 M (137:) s
+35.4 378 M
+(        @Override) s
+14.4 370 M (138:) s
+35.4 370 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 370 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 370 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 370 M
+(boolean) s
+/F-gs-font 7 7 SF
+127.8 370 M
+( isCallbackOrderingPrereq\(OFType type, String name\) {) s
+14.4 362 M (139:) s
+35.4 362 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 362 M
+(// TODO Auto-generated method stub) s
+/F-gs-font 7 7 SF
+14.4 354 M (140:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 354 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 354 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 354 M
+( ) s
+/Courier-Bold 7 7 SUF
+132 354 M
+(false) s
+/F-gs-font 7 7 SF
+153 354 M
+(;) s
+14.4 346 M (141:) s
+35.4 346 M
+(        }) s
+14.4 338 M (142:) s
+14.4 330 M (143:) s
+35.4 330 M
+(        @Override) s
+14.4 322 M (144:) s
+35.4 322 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 322 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 322 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 322 M
+(boolean) s
+/F-gs-font 7 7 SF
+127.8 322 M
+( isCallbackOrderingPostreq\(OFType type, String name\) {) s
+14.4 314 M (145:) s
+35.4 314 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 314 M
+(// LearningSwitch must be executed BEFORE this module to let) s
+/F-gs-font 7 7 SF
+14.4 306 M (146:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 306 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 306 M
+(// the switch auto-learn ports before DDoSDefence tries to f) s
+5 298 M
+(igure out) s
+/F-gs-font 7 7 SF
+14.4 290 M (147:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 290 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 290 M
+(// the out port of a packet flow) s
+/F-gs-font 7 7 SF
+14.4 282 M (148:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 282 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 282 M
+(// TODO: fix, if possible, the hardcoded class name) s
+/F-gs-font 7 7 SF
+14.4 274 M (149:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 274 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 274 M
+(if) s
+/F-gs-font 7 7 SF
+111 274 M
+(\(name.equals\() s
+/Courier-Bold 7 7 SUF
+165.6 274 M
+("learningswitch") s
+/F-gs-font 7 7 SF
+232.8 274 M
+(\)\)) s
+14.4 266 M (150:) s
+35.4 266 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 266 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 266 M
+( ) s
+/Courier-Bold 7 7 SUF
+165.6 266 M
+(true) s
+/F-gs-font 7 7 SF
+182.4 266 M
+(;) s
+14.4 258 M (151:) s
+35.4 258 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 258 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 258 M
+( ) s
+/Courier-Bold 7 7 SUF
+132 258 M
+(false) s
+/F-gs-font 7 7 SF
+153 258 M
+(;) s
+14.4 250 M (152:) s
+35.4 250 M
+(        }) s
+14.4 242 M (153:) s
+14.4 234 M (154:) s
+35.4 234 M
+(        IPv4Address nextAddress\(\) {) s
+14.4 226 M (155:) s
+35.4 226 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 226 M
+(// increase addressPool index) s
+/F-gs-font 7 7 SF
+14.4 218 M (156:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 218 M
+(                currentAddressIndex++;) s
+14.4 210 M (157:) s
+35.4 210 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 210 M
+(// extract the new IP address) s
+/F-gs-font 7 7 SF
+14.4 202 M (158:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 202 M
+(                currentAddressIndex = \() s
+/Courier-Bold 7 7 SUF
+199.2 202 M
+(short) s
+/F-gs-font 7 7 SF
+220.2 202 M
+(\)\(currentAddressIndex % addressP) s
+5 194 M
+(ool.size\(\)\);) s
+14.4 186 M (159:) s
+35.4 186 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 186 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 186 M
+( addressPool.get\(currentAddressIndex\);) s
+14.4 178 M (160:) s
+35.4 178 M
+(        }) s
+14.4 170 M (161:) s
+35.4 170 M
+(        ) s
+14.4 162 M (162:) s
+35.4 162 M
+(        IPv4Address getForwardingAddress\(\) {) s
+14.4 154 M (163:) s
+35.4 154 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 154 M
+(if) s
+/F-gs-font 7 7 SF
+111 154 M
+(\(!protectionEnabled\)) s
+14.4 146 M (164:) s
+35.4 146 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 146 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 146 M
+( ) s
+/Courier-Bold 7 7 SUF
+165.6 146 M
+(null) s
+/F-gs-font 7 7 SF
+182.4 146 M
+(;) s
+14.4 138 M (165:) s
+35.4 138 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 138 M
+(int) s
+/F-gs-font 7 7 SF
+115.2 138 M
+( previousIndex = \() s
+/Courier-Bold 7 7 SUF
+190.8 138 M
+(short) s
+/F-gs-font 7 7 SF
+211.8 138 M
+(\)\(\(currentAddressIndex + addressPo) s
+5 130 M
+(ol.size\(\) - 1\) % addressPool.size\(\)\);) s
+14.4 122 M (166:) s
+35.4 122 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 122 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 122 M
+( addressPool.get\(previousIndex\);) s
+14.4 114 M (167:) s
+35.4 114 M
+(        }) s
+14.4 106 M (168:) s
+14.4 98 M (169:) s
+35.4 98 M
+(        IPv4Address getCurrentAddress\(\) {) s
+14.4 90 M (170:) s
+35.4 90 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 90 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 90 M
+( addressPool.get\(currentAddressIndex\);) s
+14.4 82 M (171:) s
+35.4 82 M
+(        }) s
+14.4 74 M (172:) s
+14.4 66 M (173:) s
+35.4 66 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 66 M
+(boolean) s
+/F-gs-font 7 7 SF
+98.4 66 M
+( isTCPPacket\(Ethernet eth\) {) s
+14.4 58 M (174:) s
+35.4 58 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 58 M
+(// filter non IPv4 packets) s
+/F-gs-font 7 7 SF
+14.4 50 M (175:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 50 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 50 M
+(if) s
+/F-gs-font 7 7 SF
+111 50 M
+(\(!\(eth.getPayload\(\) ) s
+/Courier-Bold 7 7 SUF
+195 50 M
+(instanceof) s
+/F-gs-font 7 7 SF
+237 50 M
+( IPv4\)\)) s
+14.4 42 M (176:) s
+35.4 42 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 42 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 42 M
+( ) s
+/Courier-Bold 7 7 SUF
+165.6 42 M
+(false) s
+/F-gs-font 7 7 SF
+186.6 42 M
+(;) s
+14.4 34 M (177:) s
+35.4 34 M
+(                IPv4 ipv4Msg = \(IPv4\)eth.getPayload\(\);) s
+14.4 26 M (178:) s
+14.4 18 M (179:) s
+35.4 18 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 18 M
+(//System.out.print\("controller: packet is IPv4"\);) s
+/F-gs-font 7 7 SF
+14.4 10 M (180:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+14.4 2 M (181:) s
+35.4 2 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 2 M
+(// filter non TCP packets) s
+/F-gs-font 7 7 SF
+374.4 530 M (182:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 530 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 530 M
+(if) s
+/F-gs-font 7 7 SF
+471 530 M
+(\(!\(ipv4Msg.getPayload\(\) ) s
+/Courier-Bold 7 7 SUF
+571.8 530 M
+(instanceof) s
+/F-gs-font 7 7 SF
+613.8 530 M
+( TCP\)\)) s
+374.4 522 M (183:) s
+395.4 522 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 522 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 522 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 522 M
+(false) s
+/F-gs-font 7 7 SF
+546.6 522 M
+(;) s
+374.4 514 M (184:) s
+395.4 514 M
+(                TCP tcpMsg = \(TCP\)ipv4Msg.getPayload\(\);) s
+374.4 506 M (185:) s
+374.4 498 M (186:) s
+395.4 498 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 498 M
+(//System.out.println\("controller: packet is TCP"\);) s
+/F-gs-font 7 7 SF
+374.4 490 M (187:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 490 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+542.4 490 M
+("controller: packet") s
+/F-gs-font 7 7 SF
+374.4 482 M (188:) s
+395.4 482 M
+(                                + ) s
+/Courier-Bold 7 7 SUF
+538.2 482 M
+(" has src ") s
+/F-gs-font 7 7 SF
+584.4 482 M
+( + ipv4Msg.getSourceAddress\(\).t) s
+365 474 M
+(oString\(\) + ) s
+/Courier-Bold 7 7 SUF
+415.4 474 M
+(":") s
+/F-gs-font 7 7 SF
+428 474 M
+( + tcpMsg.getSourcePort\(\).toString\(\)) s
+374.4 466 M (189:) s
+395.4 466 M
+(                                + ) s
+/Courier-Bold 7 7 SUF
+538.2 466 M
+(" and dst ") s
+/F-gs-font 7 7 SF
+584.4 466 M
+( + ipv4Msg.getDestinationAddres) s
+365 458 M
+(s\(\).toString\(\) + ) s
+/Courier-Bold 7 7 SUF
+436.4 458 M
+(":") s
+/F-gs-font 7 7 SF
+449 458 M
+(  + tcpMsg.getDestinationPort\(\).toString\(\)\);) s
+374.4 450 M (190:) s
+395.4 450 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 450 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 450 M
+( ) s
+/Courier-Bold 7 7 SUF
+492 450 M
+(true) s
+/F-gs-font 7 7 SF
+508.8 450 M
+(;) s
+374.4 442 M (191:) s
+395.4 442 M
+(        }) s
+374.4 434 M (192:) s
+374.4 426 M (193:) s
+395.4 426 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 426 M
+(boolean) s
+/F-gs-font 7 7 SF
+458.4 426 M
+( isClientToServerPacket\(IPv4 ipv4Msg, TCP tcpMsg\) {) s
+374.4 418 M (194:) s
+395.4 418 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 418 M
+(// filter packets not sent to the server \(at new address or ) s
+365 410 M
+(old address\)) s
+/F-gs-font 7 7 SF
+374.4 402 M (195:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 402 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 402 M
+(if) s
+/F-gs-font 7 7 SF
+471 402 M
+(\(!ipv4Msg.getDestinationAddress\(\).equals\(getCurrentAddress) s
+365 394 M
+(\(\)\)) s
+374.4 386 M (196:) s
+395.4 386 M
+(                                && !ipv4Msg.getDestinationAddress\(\).equals\(g) s
+365 378 M
+(etForwardingAddress\(\)\)\)) s
+374.4 370 M (197:) s
+395.4 370 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 370 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 370 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 370 M
+(false) s
+/F-gs-font 7 7 SF
+546.6 370 M
+(;) s
+374.4 362 M (198:) s
+374.4 354 M (199:) s
+395.4 354 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 354 M
+(// filter packets sent to other services) s
+/F-gs-font 7 7 SF
+374.4 346 M (200:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 346 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 346 M
+(if) s
+/F-gs-font 7 7 SF
+471 346 M
+(\(!\(tcpMsg.getDestinationPort\(\).equals\(protectedServicePort) s
+365 338 M
+(\)\)\)) s
+374.4 330 M (201:) s
+395.4 330 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 330 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 330 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 330 M
+(false) s
+/F-gs-font 7 7 SF
+546.6 330 M
+(;) s
+374.4 322 M (202:) s
+374.4 314 M (203:) s
+395.4 314 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 314 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 314 M
+( ) s
+/Courier-Bold 7 7 SUF
+492 314 M
+(true) s
+/F-gs-font 7 7 SF
+508.8 314 M
+(;) s
+374.4 306 M (204:) s
+395.4 306 M
+(        }) s
+374.4 298 M (205:) s
+374.4 290 M (206:) s
+395.4 290 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 290 M
+(boolean) s
+/F-gs-font 7 7 SF
+458.4 290 M
+( isServerToClientPacket\(IPv4 ipv4Msg, TCP tcpMsg\) {) s
+374.4 282 M (207:) s
+395.4 282 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 282 M
+(// filter packets not coming from the server address) s
+/F-gs-font 7 7 SF
+374.4 274 M (208:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 274 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 274 M
+(if) s
+/F-gs-font 7 7 SF
+471 274 M
+(\(!ipv4Msg.getSourceAddress\(\).equals\(getCurrentAddress\(\)\)) s
+374.4 266 M (209:) s
+395.4 266 M
+(                                && !ipv4Msg.getSourceAddress\(\).equals\(getFor) s
+365 258 M
+(wardingAddress\(\)\)\)) s
+374.4 250 M (210:) s
+395.4 250 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 250 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 250 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 250 M
+(false) s
+/F-gs-font 7 7 SF
+546.6 250 M
+(;) s
+374.4 242 M (211:) s
+374.4 234 M (212:) s
+395.4 234 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 234 M
+(// filter packets not coming from the server port) s
+/F-gs-font 7 7 SF
+374.4 226 M (213:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 226 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 226 M
+(if) s
+/F-gs-font 7 7 SF
+471 226 M
+(\(!\(tcpMsg.getSourcePort\(\).equals\(protectedServicePort\)\)\)) s
+374.4 218 M (214:) s
+395.4 218 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 218 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 218 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 218 M
+(false) s
+/F-gs-font 7 7 SF
+546.6 218 M
+(;) s
+374.4 210 M (215:) s
+374.4 202 M (216:) s
+395.4 202 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 202 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 202 M
+( ) s
+/Courier-Bold 7 7 SUF
+492 202 M
+(true) s
+/F-gs-font 7 7 SF
+508.8 202 M
+(;) s
+374.4 194 M (217:) s
+395.4 194 M
+(        }) s
+374.4 186 M (218:) s
+374.4 178 M (219:) s
+395.4 178 M
+(        ) s
+/Courier-Oblique 7 7 SUF
+429 178 M
+(/*U64 getRulesCookie\(IPv4Address sourceIp\) {) s
+/F-gs-font 7 7 SF
+374.4 170 M (220:) s
+/Courier-Oblique 7 7 SUF
+395.4 170 M
+(                // format:) s
+/F-gs-font 7 7 SF
+374.4 162 M (221:) s
+/Courier-Oblique 7 7 SUF
+395.4 162 M
+(                // 0x????       |       ????    |   ????????   |) s
+/F-gs-font 7 7 SF
+374.4 154 M (222:) s
+/Courier-Oblique 7 7 SUF
+395.4 154 M
+(                // 16 bit       |       16 bit  |       32 bit     |) s
+/F-gs-font 7 7 SF
+374.4 146 M (223:) s
+/Courier-Oblique 7 7 SUF
+395.4 146 M
+(                // appid        |srv addr i.|   client ip  |) s
+/F-gs-font 7 7 SF
+374.4 138 M (224:) s
+/Courier-Oblique 7 7 SUF
+395.4 138 M
+(                // we use the server pool index instead of the server addres) s
+365 130 M
+(s because) s
+/F-gs-font 7 7 SF
+374.4 122 M (225:) s
+/Courier-Oblique 7 7 SUF
+395.4 122 M
+(                // bits are not sufficient. index is a short and it's repres) s
+365 114 M
+(ented) s
+/F-gs-font 7 7 SF
+374.4 106 M (226:) s
+/Courier-Oblique 7 7 SUF
+395.4 106 M
+(                // on 16 bits) s
+/F-gs-font 7 7 SF
+374.4 98 M (227:) s
+/Courier-Oblique 7 7 SUF
+395.4 98 M
+(                // TODO: THIS SCHEMA IS OBSOLETE. I found a better solution ) s
+365 90 M
+(which does) s
+/F-gs-font 7 7 SF
+374.4 82 M (228:) s
+/Courier-Oblique 7 7 SUF
+395.4 82 M
+(                // not involve an overcomplication of cookies. We need just ) s
+365 74 M
+(to remember the source address) s
+/F-gs-font 7 7 SF
+374.4 66 M (229:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+374.4 58 M (230:) s
+/Courier-Oblique 7 7 SUF
+395.4 58 M
+(                long new_cookie = \(DDOSDEFENCE_APP_ID << 48\) | sourceIp.getI) s
+365 50 M
+(nt\(\);) s
+/F-gs-font 7 7 SF
+374.4 42 M (231:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+374.4 34 M (232:) s
+/Courier-Oblique 7 7 SUF
+395.4 34 M
+(                return U64.of\(new_cookie\);) s
+/F-gs-font 7 7 SF
+374.4 26 M (233:) s
+/Courier-Oblique 7 7 SUF
+395.4 26 M
+(        }*/) s
+/F-gs-font 7 7 SF
+374.4 18 M (234:) s
+374.4 10 M (235:) s
+395.4 10 M
+(        OFFlowAdd buildFlowAdd\(IOFSwitch sw, OFPacketIn pi, Ethernet eth,) s
+374.4 2 M (236:) s
+395.4 2 M
+(                        IPv4Address srcAddr, TransportPort srcPort, IPv4Addr) s
+_R
+S
+%%Page: (3) 3
+%%BeginPageSetup
+_S
+90 rotate
+36 -594 translate
+/pagenum 3 def
+/fname (DDosDefence.java) def
+/fdir (.) def
+/ftail (DDosDefence.java) def
+% User defined strings:
+/pagenumstr (3) def
+/moddatestr (12/30/18) def
+/modtimestr (13:28:07) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+column_lines
+do_header
+5 530 M
+(ess dstAddr, ) s
+/Courier-Bold 7 7 SUF
+59.6 530 M
+(boolean) s
+/F-gs-font 7 7 SF
+89 530 M
+( drop\) {) s
+14.4 522 M (237:) s
+35.4 522 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 522 M
+(// new MATCH list \(ipv4 traffic to the protected server\)) s
+/F-gs-font 7 7 SF
+14.4 514 M (238:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 514 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 514 M
+(// add rule for \(src:srcport -> dstaddress:address\)) s
+/F-gs-font 7 7 SF
+14.4 506 M (239:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 506 M
+(                Match.Builder mb = sw.getOFFactory\(\).buildMatch\(\);) s
+14.4 498 M (240:) s
+35.4 498 M
+(                mb.setExact\(MatchField.ETH_TYPE, EthType.IPv4\);) s
+14.4 490 M (241:) s
+35.4 490 M
+(                mb.setExact\(MatchField.IP_PROTO, IpProtocol.TCP\);) s
+14.4 482 M (242:) s
+35.4 482 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 482 M
+(if) s
+/F-gs-font 7 7 SF
+111 482 M
+(\(srcPort != ) s
+/Courier-Bold 7 7 SUF
+161.4 482 M
+(null) s
+/F-gs-font 7 7 SF
+178.2 482 M
+(\)) s
+14.4 474 M (243:) s
+35.4 474 M
+(                        mb.setExact\(MatchField.TCP_SRC, srcPort\);) s
+14.4 466 M (244:) s
+35.4 466 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 466 M
+(if) s
+/F-gs-font 7 7 SF
+111 466 M
+(\(srcAddr != ) s
+/Courier-Bold 7 7 SUF
+161.4 466 M
+(null) s
+/F-gs-font 7 7 SF
+178.2 466 M
+(\)) s
+14.4 458 M (245:) s
+35.4 458 M
+(                        mb.setExact\(MatchField.IPV4_SRC, srcAddr\);) s
+14.4 450 M (246:) s
+35.4 450 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 450 M
+(if) s
+/F-gs-font 7 7 SF
+111 450 M
+(\(dstAddr != ) s
+/Courier-Bold 7 7 SUF
+161.4 450 M
+(null) s
+/F-gs-font 7 7 SF
+178.2 450 M
+(\)) s
+14.4 442 M (247:) s
+35.4 442 M
+(                        mb.setExact\(MatchField.IPV4_DST, dstAddr\);) s
+14.4 434 M (248:) s
+14.4 426 M (249:) s
+35.4 426 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 426 M
+(// new RULE) s
+/F-gs-font 7 7 SF
+14.4 418 M (250:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 418 M
+(                OFFlowAdd.Builder fmb = sw.getOFFactory\(\).buildFlowAdd\(\);) s
+14.4 410 M (251:) s
+35.4 410 M
+(                fmb.setXid\(pi.getXid\(\)\);) s
+14.4 402 M (252:) s
+35.4 402 M
+(                fmb.setOutPort\(OFPort.CONTROLLER\);) s
+14.4 394 M (253:) s
+35.4 394 M
+(                fmb.setBufferId\(pi.getBufferId\(\)\);) s
+14.4 386 M (254:) s
+35.4 386 M
+(                fmb.setPriority\(FlowModUtils.PRIORITY_MAX\);) s
+14.4 378 M (255:) s
+35.4 378 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 378 M
+(// TODO: Investigate timeout) s
+/F-gs-font 7 7 SF
+14.4 370 M (256:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 370 M
+(                fmb.setHardTimeout\(60\);) s
+14.4 362 M (257:) s
+35.4 362 M
+(                fmb.setIdleTimeout\(60\);) s
+14.4 354 M (258:) s
+14.4 346 M (259:) s
+35.4 346 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 346 M
+(// new ACTION LIST) s
+/F-gs-font 7 7 SF
+14.4 338 M (260:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 338 M
+(                OFActions actions = sw.getOFFactory\(\).actions\(\);) s
+14.4 330 M (261:) s
+35.4 330 M
+(                ArrayList<OFAction> actionList = ) s
+/Courier-Bold 7 7 SUF
+241.2 330 M
+(new) s
+/F-gs-font 7 7 SF
+253.8 330 M
+( ArrayList<OFAction>\(\);) s
+14.4 322 M (262:) s
+14.4 314 M (263:) s
+35.4 314 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 314 M
+(// if rule is not drop then we must add a rule that switches) s
+5 306 M
+( packet to the correct) s
+/F-gs-font 7 7 SF
+14.4 298 M (264:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 298 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 298 M
+(// destination port. This port must be obtained from the L2 ) s
+5 290 M
+(switching table \(implemented by LearningSwitch\)) s
+/F-gs-font 7 7 SF
+14.4 282 M (265:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 282 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 282 M
+(// otherwise don't add anything, empty action list means dro) s
+5 274 M
+(p action) s
+/F-gs-font 7 7 SF
+14.4 266 M (266:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 266 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 266 M
+(// NOTE: OFPort.NORMAL cannot be used without an hybrid Open) s
+5 258 M
+(Flow Switch) s
+/F-gs-font 7 7 SF
+14.4 250 M (267:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 250 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 250 M
+(if) s
+/F-gs-font 7 7 SF
+111 250 M
+(\(!drop\) {) s
+14.4 242 M (268:) s
+35.4 242 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 242 M
+(// learningSwitch.getFromPortMap\(\) is thread safe \(T) s
+5 234 M
+(HANK GOD\)) s
+/F-gs-font 7 7 SF
+14.4 226 M (269:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 226 M
+(                        OFPort macPort = learningSwitch.getFromPortMap\(sw, e) s
+5 218 M
+(th.getDestinationMACAddress\(\), ) s
+/Courier-Bold 7 7 SUF
+135.2 218 M
+(null) s
+/F-gs-font 7 7 SF
+152 218 M
+(\);) s
+14.4 210 M (270:) s
+35.4 210 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 210 M
+(// if no switching entry is found, then packet must ) s
+5 202 M
+(be flooded \(as a normal L2 switch would do\)) s
+/F-gs-font 7 7 SF
+14.4 194 M (271:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 194 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 194 M
+(if) s
+/F-gs-font 7 7 SF
+144.6 194 M
+(\(macPort == ) s
+/Courier-Bold 7 7 SUF
+195 194 M
+(null) s
+/F-gs-font 7 7 SF
+211.8 194 M
+(\)) s
+14.4 186 M (272:) s
+35.4 186 M
+(                                macPort = OFPort.FLOOD;) s
+14.4 178 M (273:) s
+35.4 178 M
+(                        actionList.add\(actions.output\(macPort, Integer.MAX_V) s
+5 170 M
+(ALUE\)\);) s
+14.4 162 M (274:) s
+35.4 162 M
+(                }) s
+14.4 154 M (275:) s
+14.4 146 M (276:) s
+35.4 146 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 146 M
+(// Rule can change IP destination address of packets) s
+/F-gs-font 7 7 SF
+14.4 138 M (277:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 138 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 138 M
+(/*OFOxms oxms = sw.getOFFactory\(\).oxms\(\);) s
+/F-gs-font 7 7 SF
+14.4 130 M (278:) s
+/Courier-Oblique 7 7 SUF
+35.4 130 M
+(                OFActionSetField setDlDst = actions.buildSetField\(\)) s
+/F-gs-font 7 7 SF
+14.4 122 M (279:) s
+/Courier-Oblique 7 7 SUF
+35.4 122 M
+(                        .setField\() s
+/F-gs-font 7 7 SF
+14.4 114 M (280:) s
+/Courier-Oblique 7 7 SUF
+35.4 114 M
+(                                oxms.buildIpv4Dst\(\)) s
+/F-gs-font 7 7 SF
+14.4 106 M (281:) s
+/Courier-Oblique 7 7 SUF
+35.4 106 M
+(                                .setValue\(protectedServiceAddress\)) s
+/F-gs-font 7 7 SF
+14.4 98 M (282:) s
+/Courier-Oblique 7 7 SUF
+35.4 98 M
+(                                .build\(\)) s
+/F-gs-font 7 7 SF
+14.4 90 M (283:) s
+/Courier-Oblique 7 7 SUF
+35.4 90 M
+(                                \).build\(\);) s
+/F-gs-font 7 7 SF
+14.4 82 M (284:) s
+/Courier-Oblique 7 7 SUF
+35.4 82 M
+(                actionList.add\(setDlDst\);*/) s
+/F-gs-font 7 7 SF
+14.4 74 M (285:) s
+14.4 66 M (286:) s
+35.4 66 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 66 M
+(// attach ACTION LIST to RULE) s
+/F-gs-font 7 7 SF
+14.4 58 M (287:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 58 M
+(                fmb.setActions\(actionList\);) s
+14.4 50 M (288:) s
+35.4 50 M
+(                fmb.setMatch\(mb.build\(\)\);) s
+14.4 42 M (289:) s
+14.4 34 M (290:) s
+35.4 34 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+182.4 34 M
+("controller: new buildFlowAdd rule create) s
+5 26 M
+(d \(with drop = ") s
+/F-gs-font 7 7 SF
+72.2 26 M
+( + Boolean.toString\(drop\) + ) s
+/Courier-Bold 7 7 SUF
+189.8 26 M
+("\)") s
+/F-gs-font 7 7 SF
+202.4 26 M
+(\);) s
+14.4 18 M (291:) s
+35.4 18 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 18 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 18 M
+( fmb.build\(\);) s
+14.4 10 M (292:) s
+35.4 10 M
+(        }) s
+14.4 2 M (293:) s
+374.4 530 M (294:) s
+395.4 530 M
+(        OFFlowDelete buildFlowDelete\(IOFSwitch sw, OFPacketIn pi, IPv4Addres) s
+365 522 M
+(s srcAddr, IPv4Address dstAddr\) {) s
+374.4 514 M (295:) s
+395.4 514 M
+(                Match.Builder mb = sw.getOFFactory\(\).buildMatch\(\);) s
+374.4 506 M (296:) s
+395.4 506 M
+(                mb.setExact\(MatchField.ETH_TYPE, EthType.IPv4\);) s
+374.4 498 M (297:) s
+395.4 498 M
+(                mb.setExact\(MatchField.IP_PROTO, IpProtocol.TCP\);) s
+374.4 490 M (298:) s
+395.4 490 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 490 M
+(if) s
+/F-gs-font 7 7 SF
+471 490 M
+(\(srcAddr != ) s
+/Courier-Bold 7 7 SUF
+521.4 490 M
+(null) s
+/F-gs-font 7 7 SF
+538.2 490 M
+(\)) s
+374.4 482 M (299:) s
+395.4 482 M
+(                        mb.setExact\(MatchField.IPV4_SRC, srcAddr\);) s
+374.4 474 M (300:) s
+395.4 474 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 474 M
+(if) s
+/F-gs-font 7 7 SF
+471 474 M
+(\(dstAddr != ) s
+/Courier-Bold 7 7 SUF
+521.4 474 M
+(null) s
+/F-gs-font 7 7 SF
+538.2 474 M
+(\)) s
+374.4 466 M (301:) s
+395.4 466 M
+(                        mb.setExact\(MatchField.IPV4_DST, dstAddr\);) s
+374.4 458 M (302:) s
+374.4 450 M (303:) s
+395.4 450 M
+(                OFFlowDelete.Builder fmb = sw.getOFFactory\(\).buildFlowDelete) s
+365 442 M
+(\(\);) s
+374.4 434 M (304:) s
+395.4 434 M
+(                fmb.setBufferId\(pi.getBufferId\(\)\);) s
+374.4 426 M (305:) s
+395.4 426 M
+(                fmb.setXid\(pi.getXid\(\)\);) s
+374.4 418 M (306:) s
+395.4 418 M
+(                fmb.setMatch\(mb.build\(\)\);) s
+374.4 410 M (307:) s
+395.4 410 M
+(                fmb.setCookieMask\(U64.FULL_MASK\);) s
+374.4 402 M (308:) s
+395.4 402 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+542.4 402 M
+("controller: new buildFlowDelete rule cre) s
+365 394 M
+(ated") s
+/F-gs-font 7 7 SF
+386 394 M
+(\);) s
+374.4 386 M (309:) s
+395.4 386 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 386 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 386 M
+( fmb.build\(\);) s
+374.4 378 M (310:) s
+395.4 378 M
+(        }) s
+374.4 370 M (311:) s
+374.4 362 M (312:) s
+395.4 362 M
+(        OFPacketOut forwardPacketIn\(IOFSwitch sw, OFPacketIn pi, Ethernet et) s
+365 354 M
+(h\) {) s
+374.4 346 M (313:) s
+395.4 346 M
+(                OFPacketOut.Builder pob = sw.getOFFactory\(\).buildPacketOut\(\)) s
+365 338 M
+(;) s
+374.4 330 M (314:) s
+395.4 330 M
+(                pob.setBufferId\(OFBufferId.NO_BUFFER\);) s
+374.4 322 M (315:) s
+395.4 322 M
+(                pob.setInPort\(OFPort.ANY\);) s
+374.4 314 M (316:) s
+374.4 306 M (317:) s
+395.4 306 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 306 M
+(// Create action -> send the packet back from the source por) s
+365 298 M
+(t) s
+/F-gs-font 7 7 SF
+374.4 290 M (318:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 290 M
+(                OFActionOutput.Builder actionBuilder = sw.getOFFactory\(\).act) s
+365 282 M
+(ions\(\).buildOutput\(\);) s
+374.4 274 M (319:) s
+395.4 274 M
+(                OFPort outport = learningSwitch.getFromPortMap\(sw, eth.getDe) s
+365 266 M
+(stinationMACAddress\(\), ) s
+/Courier-Bold 7 7 SUF
+461.6 266 M
+(null) s
+/F-gs-font 7 7 SF
+478.4 266 M
+(\);) s
+374.4 258 M (320:) s
+395.4 258 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 258 M
+(if) s
+/F-gs-font 7 7 SF
+471 258 M
+(\(outport == ) s
+/Courier-Bold 7 7 SUF
+521.4 258 M
+(null) s
+/F-gs-font 7 7 SF
+538.2 258 M
+(\)) s
+374.4 250 M (321:) s
+395.4 250 M
+(                        outport = OFPort.FLOOD;) s
+374.4 242 M (322:) s
+374.4 234 M (323:) s
+395.4 234 M
+(                actionBuilder.setPort\(outport\);) s
+374.4 226 M (324:) s
+374.4 218 M (325:) s
+395.4 218 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 218 M
+(// Assign the action) s
+/F-gs-font 7 7 SF
+374.4 210 M (326:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 210 M
+(                pob.setActions\(Collections.singletonList\(\(OFAction\) actionBu) s
+365 202 M
+(ilder.build\(\)\)\);) s
+374.4 194 M (327:) s
+374.4 186 M (328:) s
+395.4 186 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 186 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 186 M
+( pob.build\(\);) s
+374.4 178 M (329:) s
+395.4 178 M
+(        }) s
+374.4 170 M (330:) s
+374.4 162 M (331:) s
+395.4 162 M
+(        @Override) s
+374.4 154 M (332:) s
+395.4 154 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 154 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 154 M
+( Command receive\(IOFSwitch sw, OFMessage msg, FloodlightContex) s
+365 146 M
+(t cntx\) {) s
+374.4 138 M (333:) s
+395.4 138 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 138 M
+(// This module requires some initialization data set by the ) s
+365 130 M
+(HTTPServer.) s
+/F-gs-font 7 7 SF
+374.4 122 M (334:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 122 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 122 M
+(// Don't continue if request has not been done) s
+/F-gs-font 7 7 SF
+374.4 114 M (335:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 114 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 114 M
+(if) s
+/F-gs-font 7 7 SF
+471 114 M
+(\(!initialized\)) s
+374.4 106 M (336:) s
+395.4 106 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 106 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 106 M
+( Command.CONTINUE;) s
+374.4 98 M (337:) s
+374.4 90 M (338:) s
+395.4 90 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+542.4 90 M
+("controller: Received new packet of type ) s
+365 82 M
+(") s
+/F-gs-font 7 7 SF
+369.2 82 M
+( + msg.getType\(\).toString\(\)\);) s
+374.4 74 M (339:) s
+374.4 66 M (340:) s
+395.4 66 M
+(                OFPacketIn pi = \(OFPacketIn\)msg;) s
+374.4 58 M (341:) s
+395.4 58 M
+(                Ethernet eth = IFloodlightProviderService.bcStore.get\(cntx, ) s
+365 50 M
+(IFloodlightProviderService.CONTEXT_PI_PAYLOAD\);) s
+374.4 42 M (342:) s
+374.4 34 M (343:) s
+395.4 34 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 34 M
+(// filter non TCP packets) s
+/F-gs-font 7 7 SF
+374.4 26 M (344:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 26 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 26 M
+(if) s
+/F-gs-font 7 7 SF
+471 26 M
+(\(!isTCPPacket\(eth\)\)) s
+374.4 18 M (345:) s
+395.4 18 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 18 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 18 M
+( Command.CONTINUE;) s
+374.4 10 M (346:) s
+374.4 2 M (347:) s
+395.4 2 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 2 M
+(// get IPv4 and TCP headers) s
+_R
+S
+%%Page: (4) 4
+%%BeginPageSetup
+_S
+90 rotate
+36 -594 translate
+/pagenum 4 def
+/fname (DDosDefence.java) def
+/fdir (.) def
+/ftail (DDosDefence.java) def
+/Courier-Oblique 7 7 SUF
+% User defined strings:
+/pagenumstr (4) def
+/moddatestr (12/30/18) def
+/modtimestr (13:28:07) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+column_lines
+do_header
+/F-gs-font 7 7 SF
+14.4 530 M (348:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 530 M
+(                IPv4 ipv4Msg = \(IPv4\)eth.getPayload\(\);) s
+14.4 522 M (349:) s
+35.4 522 M
+(                TCP tcpMsg = \(TCP\)ipv4Msg.getPayload\(\);) s
+14.4 514 M (350:) s
+14.4 506 M (351:) s
+35.4 506 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 506 M
+(// Define a list of flow actions to send to the switch) s
+/F-gs-font 7 7 SF
+14.4 498 M (352:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 498 M
+(                ArrayList<OFMessage> OFMessageList = ) s
+/Courier-Bold 7 7 SUF
+258 498 M
+(new) s
+/F-gs-font 7 7 SF
+270.6 498 M
+( ArrayList<OFMessage) s
+5 490 M
+(>\(\);) s
+14.4 482 M (353:) s
+14.4 474 M (354:) s
+35.4 474 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 474 M
+(// check if packet source is the protected server) s
+/F-gs-font 7 7 SF
+14.4 466 M (355:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 466 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 466 M
+(if) s
+/F-gs-font 7 7 SF
+111 466 M
+(\(isServerToClientPacket\(ipv4Msg,tcpMsg\)\) {) s
+14.4 458 M (356:) s
+35.4 458 M
+(                        System.out.println\() s
+/Courier-Bold 7 7 SUF
+216 458 M
+("controller: packet sent from the) s
+5 450 M
+( server to a client") s
+/F-gs-font 7 7 SF
+89 450 M
+(\);) s
+14.4 442 M (357:) s
+14.4 434 M (358:) s
+35.4 434 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 434 M
+(// do packet_out, forward packet following L2 switch) s
+5 426 M
+(ing) s
+/F-gs-font 7 7 SF
+14.4 418 M (359:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 418 M
+(                        OFMessageList.add\(forwardPacketIn\(sw, pi, eth\)\);) s
+14.4 410 M (360:) s
+14.4 402 M (361:) s
+35.4 402 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 402 M
+(// create a new rule to allow the forwarding) s
+/F-gs-font 7 7 SF
+14.4 394 M (362:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 394 M
+(                        OFFlowAdd fAdd = buildFlowAdd\(sw, pi, eth,) s
+14.4 386 M (363:) s
+35.4 386 M
+(                                        ipv4Msg.getSourceAddress\(\), tcpMsg.g) s
+5 378 M
+(etSourcePort\(\),) s
+14.4 370 M (364:) s
+35.4 370 M
+(                                        ipv4Msg.getDestinationAddress\(\),) s
+14.4 362 M (365:) s
+35.4 362 M
+(                                        ) s
+/Courier-Bold 7 7 SUF
+203.4 362 M
+(false) s
+/F-gs-font 7 7 SF
+224.4 362 M
+(\);) s
+14.4 354 M (366:) s
+35.4 354 M
+(                        OFMessageList.add\(fAdd\);) s
+14.4 346 M (367:) s
+14.4 338 M (368:) s
+35.4 338 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 338 M
+(// send flow list to the switch) s
+/F-gs-font 7 7 SF
+14.4 330 M (369:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 330 M
+(                        sw.write\(OFMessageList\);) s
+14.4 322 M (370:) s
+14.4 314 M (371:) s
+35.4 314 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 314 M
+(// pipeline traversal can end here) s
+/F-gs-font 7 7 SF
+14.4 306 M (372:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 306 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 306 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 306 M
+( Command.STOP;) s
+14.4 298 M (373:) s
+35.4 298 M
+(                }) s
+14.4 290 M (374:) s
+14.4 282 M (375:) s
+35.4 282 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 282 M
+(// otherwise check if packet is coming from a client to the ) s
+5 274 M
+(server) s
+/F-gs-font 7 7 SF
+14.4 266 M (376:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 266 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 266 M
+(if) s
+/F-gs-font 7 7 SF
+111 266 M
+(\(!isClientToServerPacket\(ipv4Msg,tcpMsg\)\)) s
+14.4 258 M (377:) s
+35.4 258 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 258 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 258 M
+( Command.CONTINUE;) s
+14.4 250 M (378:) s
+14.4 242 M (379:) s
+35.4 242 M
+(                IPv4Address clientAddress = ipv4Msg.getSourceAddress\(\);) s
+14.4 234 M (380:) s
+35.4 234 M
+(                TransportPort clientPort = tcpMsg.getSourcePort\(\);) s
+14.4 226 M (381:) s
+35.4 226 M
+(                IPv4Address requestedServerAddress = ipv4Msg.getDestinationA) s
+5 218 M
+(ddress\(\);) s
+14.4 210 M (382:) s
+35.4 210 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 210 M
+(//TransportPort requestedServerPort = tcpMsg.getDestinationP) s
+5 202 M
+(ort\(\);) s
+/F-gs-font 7 7 SF
+14.4 194 M (383:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 194 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+182.4 194 M
+("controller: packet sent from a client to) s
+5 186 M
+( the server") s
+/F-gs-font 7 7 SF
+55.4 186 M
+(\);) s
+14.4 178 M (384:) s
+14.4 170 M (385:) s
+35.4 170 M
+(                HashSet<TransportPort> connList = connectionListHM.get\(clien) s
+5 162 M
+(tAddress\);) s
+14.4 154 M (386:) s
+35.4 154 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 154 M
+(// if protectionEnabled, add current source port to the list) s
+5 146 M
+( for the current source address.) s
+/F-gs-font 7 7 SF
+14.4 138 M (387:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 138 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 138 M
+(// only connections to forwarding server \(D\) must be taken i) s
+5 130 M
+(nto account \(pseudo code does not do this\)) s
+/F-gs-font 7 7 SF
+14.4 122 M (388:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 122 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 122 M
+(if) s
+/F-gs-font 7 7 SF
+111 122 M
+(\(protectionEnabled && requestedServerAddress.equals\(getFor) s
+5 114 M
+(wardingAddress\(\)\)\) {) s
+14.4 106 M (389:) s
+35.4 106 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 106 M
+(// Create a new ArrayList HashMap entry if it doesn') s
+5 98 M
+(t exist) s
+/F-gs-font 7 7 SF
+14.4 90 M (390:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 90 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 90 M
+(if) s
+/F-gs-font 7 7 SF
+144.6 90 M
+(\(connList == ) s
+/Courier-Bold 7 7 SUF
+199.2 90 M
+(null) s
+/F-gs-font 7 7 SF
+216 90 M
+(\) {) s
+14.4 82 M (391:) s
+35.4 82 M
+(                                connList = ) s
+/Courier-Bold 7 7 SUF
+216 82 M
+(new) s
+/F-gs-font 7 7 SF
+228.6 82 M
+( HashSet<TransportPort>\(\);) s
+14.4 74 M (392:) s
+35.4 74 M
+(                                connectionListHM.put\(clientAddress, connList) s
+5 66 M
+(\);) s
+14.4 58 M (393:) s
+35.4 58 M
+(                        }) s
+14.4 50 M (394:) s
+14.4 42 M (395:) s
+35.4 42 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 42 M
+(// Add the current source port to the list on if not) s
+5 34 M
+( present) s
+/F-gs-font 7 7 SF
+14.4 26 M (396:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 26 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 26 M
+(boolean) s
+/F-gs-font 7 7 SF
+165.6 26 M
+( isNewConnection = connList.add\(clientPort\);) s
+14.4 18 M (397:) s
+14.4 10 M (398:) s
+35.4 10 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 10 M
+(if) s
+/F-gs-font 7 7 SF
+144.6 10 M
+(\(isNewConnection\)) s
+14.4 2 M (399:) s
+35.4 2 M
+(                                System.out.println\() s
+/Courier-Bold 7 7 SUF
+249.6 2 M
+("controller: client ") s
+/F-gs-font 7 7 SF
+337.8 2 M
+( + c) s
+365 530 M
+(lientAddress.toString\(\)) s
+374.4 522 M (400:) s
+395.4 522 M
+(                                                + ) s
+/Courier-Bold 7 7 SUF
+605.4 522 M
+(" has now ") s
+/F-gs-font 7 7 SF
+651.6 522 M
+( + connList.siz) s
+365 514 M
+(e\(\) + ) s
+/Courier-Bold 7 7 SUF
+390.2 514 M
+(" connection count") s
+/F-gs-font 7 7 SF
+470 514 M
+(\);) s
+374.4 506 M (401:) s
+395.4 506 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 506 M
+(else) s
+/F-gs-font 7 7 SF
+374.4 498 M (402:) s
+395.4 498 M
+(                                System.out.println\() s
+/Courier-Bold 7 7 SUF
+609.6 498 M
+("controller: already coun) s
+365 490 M
+(ted client port") s
+/F-gs-font 7 7 SF
+432.2 490 M
+(\);) s
+374.4 482 M (403:) s
+395.4 482 M
+(                }) s
+374.4 474 M (404:) s
+374.4 466 M (405:) s
+395.4 466 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 466 M
+(// if current client connections are higher than threshold, ) s
+365 458 M
+(build a drop rule) s
+/F-gs-font 7 7 SF
+374.4 450 M (406:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 450 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 450 M
+(if) s
+/F-gs-font 7 7 SF
+471 450 M
+(\(connList != ) s
+/Courier-Bold 7 7 SUF
+525.6 450 M
+(null) s
+/F-gs-font 7 7 SF
+542.4 450 M
+( && connList.size\(\) > connectionsThreshol) s
+365 442 M
+(d\) {) s
+374.4 434 M (407:) s
+395.4 434 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+496.2 434 M
+(// add a drop rule for the current client src addres) s
+365 426 M
+(s) s
+/F-gs-font 7 7 SF
+374.4 418 M (408:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 418 M
+(                        OFFlowAdd fAdd = buildFlowAdd\(sw, pi, eth,) s
+374.4 410 M (409:) s
+395.4 410 M
+(                                        clientAddress, ) s
+/Courier-Bold 7 7 SUF
+626.4 410 M
+(null) s
+/F-gs-font 7 7 SF
+643.2 410 M
+(,) s
+374.4 402 M (410:) s
+395.4 402 M
+(                                        requestedServerAddress, ) s
+/Courier-Bold 7 7 SUF
+664.2 402 M
+(true) s
+/F-gs-font 7 7 SF
+681 402 M
+(\);) s
+374.4 394 M (411:) s
+395.4 394 M
+(                        OFMessageList.add\(fAdd\);) s
+374.4 386 M (412:) s
+395.4 386 M
+(                } ) s
+/Courier-Bold 7 7 SUF
+471 386 M
+(else) s
+/F-gs-font 7 7 SF
+487.8 386 M
+( { ) s
+/Courier-Oblique 7 7 SUF
+500.4 386 M
+(// otherwise build a forward rule) s
+/F-gs-font 7 7 SF
+374.4 378 M (413:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 378 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+496.2 378 M
+(// do packet_out) s
+/F-gs-font 7 7 SF
+374.4 370 M (414:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 370 M
+(                        OFMessageList.add\(forwardPacketIn\(sw, pi, eth\)\);) s
+374.4 362 M (415:) s
+374.4 354 M (416:) s
+395.4 354 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+496.2 354 M
+(// add new flow) s
+/F-gs-font 7 7 SF
+374.4 346 M (417:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 346 M
+(                        OFFlowAdd fAdd = buildFlowAdd\(sw, pi, eth,) s
+374.4 338 M (418:) s
+395.4 338 M
+(                                        clientAddress, clientPort,) s
+374.4 330 M (419:) s
+395.4 330 M
+(                                        requestedServerAddress,) s
+374.4 322 M (420:) s
+395.4 322 M
+(                                        ) s
+/Courier-Bold 7 7 SUF
+563.4 322 M
+(false) s
+/F-gs-font 7 7 SF
+584.4 322 M
+(\);) s
+374.4 314 M (421:) s
+374.4 306 M (422:) s
+395.4 306 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 306 M
+(if) s
+/F-gs-font 7 7 SF
+504.6 306 M
+(\(requestedServerAddress.equals\(getCurrentAddress\(\)) s
+365 298 M
+(\)) s
+374.4 290 M (423:) s
+395.4 290 M
+(                                        && protectionEnabled) s
+374.4 282 M (424:) s
+395.4 282 M
+(                                        && connList != ) s
+/Courier-Bold 7 7 SUF
+626.4 282 M
+(null) s
+/F-gs-font 7 7 SF
+643.2 282 M
+(\) {) s
+374.4 274 M (425:) s
+395.4 274 M
+(                                ) s
+/Courier-Oblique 7 7 SUF
+529.8 274 M
+(// Add OFDelete for \(client_srcaddr:* -> D\) ) s
+365 266 M
+(old entries) s
+/F-gs-font 7 7 SF
+374.4 258 M (426:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 258 M
+(                                OFMessageList.add\(buildFlowDelete\(sw, pi,) s
+374.4 250 M (427:) s
+395.4 250 M
+(                                                clientAddress, getForwarding) s
+365 242 M
+(Address\(\)\)\);) s
+374.4 234 M (428:) s
+395.4 234 M
+(                                ) s
+374.4 226 M (429:) s
+395.4 226 M
+(                                ) s
+/Courier-Oblique 7 7 SUF
+529.8 226 M
+(// Add OFDelete for \(D -> client_srcaddr:*\) ) s
+365 218 M
+(old entries) s
+/F-gs-font 7 7 SF
+374.4 210 M (430:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 210 M
+(                                OFMessageList.add\(buildFlowDelete\(sw, pi,) s
+374.4 202 M (431:) s
+395.4 202 M
+(                                                getForwardingAddress\(\), clie) s
+365 194 M
+(ntAddress\)\);) s
+374.4 186 M (432:) s
+374.4 178 M (433:) s
+395.4 178 M
+(                                ) s
+/Courier-Oblique 7 7 SUF
+529.8 178 M
+(// remove all the connections of the client ) s
+365 170 M
+(from the connection list) s
+/F-gs-font 7 7 SF
+374.4 162 M (434:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 162 M
+(                                connectionListHM.remove\(clientAddress\);) s
+374.4 154 M (435:) s
+395.4 154 M
+(                        }) s
+374.4 146 M (436:) s
+374.4 138 M (437:) s
+395.4 138 M
+(                        OFMessageList.add\(fAdd\);) s
+374.4 130 M (438:) s
+395.4 130 M
+(                }) s
+374.4 122 M (439:) s
+374.4 114 M (440:) s
+395.4 114 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 114 M
+(// Send all the rules to the switch) s
+/F-gs-font 7 7 SF
+374.4 106 M (441:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 106 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+542.4 106 M
+("controller: Sending rules") s
+/F-gs-font 7 7 SF
+655.8 106 M
+(\);) s
+374.4 98 M (442:) s
+395.4 98 M
+(                sw.write\(OFMessageList\);) s
+374.4 90 M (443:) s
+374.4 82 M (444:) s
+395.4 82 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 82 M
+(return) s
+/F-gs-font 7 7 SF
+487.8 82 M
+( Command.STOP;) s
+374.4 74 M (445:) s
+395.4 74 M
+(        }) s
+374.4 66 M (446:) s
+374.4 58 M (447:) s
+395.4 58 M
+(        @Override) s
+374.4 50 M (448:) s
+395.4 50 M
+(        ) s
+/Courier-Bold 7 7 SUF
+429 50 M
+(public) s
+/F-gs-font 7 7 SF
+454.2 50 M
+( String setEnableProtection\() s
+/Courier-Bold 7 7 SUF
+571.8 50 M
+(boolean) s
+/F-gs-font 7 7 SF
+601.2 50 M
+( enabled\) {) s
+374.4 42 M (449:) s
+395.4 42 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+462.6 42 M
+(// DDoSDefence status cannot be changed while uninitialized) s
+/F-gs-font 7 7 SF
+374.4 34 M (450:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+395.4 34 M
+(                ) s
+/Courier-Bold 7 7 SUF
+462.6 34 M
+(if) s
+/F-gs-font 7 7 SF
+471 34 M
+(\(!initialized\)) s
+374.4 26 M (451:) s
+395.4 26 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+496.2 26 M
+(return) s
+/F-gs-font 7 7 SF
+521.4 26 M
+( ) s
+/Courier-Bold 7 7 SUF
+525.6 26 M
+("Error: Uninitialized controller") s
+/F-gs-font 7 7 SF
+664.2 26 M
+(;) s
+374.4 18 M (452:) s
+374.4 10 M (453:) s
+395.4 10 M
+(                protectionEnabled = enabled;) s
+374.4 2 M (454:) s
+_R
+S
+%%Page: (5) 5
+%%BeginPageSetup
+_S
+90 rotate
+36 -594 translate
+/pagenum 5 def
+/fname (DDosDefence.java) def
+/fdir (.) def
+/ftail (DDosDefence.java) def
+% User defined strings:
+/pagenumstr (5) def
+/moddatestr (12/30/18) def
+/modtimestr (13:28:07) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+column_lines
+do_header
+14.4 530 M (455:) s
+35.4 530 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 530 M
+(// if enabled, return next pool address) s
+/F-gs-font 7 7 SF
+14.4 522 M (456:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 522 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 522 M
+(// otherwise return current) s
+/F-gs-font 7 7 SF
+14.4 514 M (457:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 514 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 514 M
+(if) s
+/F-gs-font 7 7 SF
+111 514 M
+(\(enabled\){) s
+14.4 506 M (458:) s
+35.4 506 M
+(                        connectionListHM.clear\(\);) s
+14.4 498 M (459:) s
+35.4 498 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 498 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 498 M
+( nextAddress\(\).toString\(\);) s
+14.4 490 M (460:) s
+35.4 490 M
+(                }) s
+14.4 482 M (461:) s
+35.4 482 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 482 M
+(else) s
+/F-gs-font 7 7 SF
+119.4 482 M
+({) s
+14.4 474 M (462:) s
+35.4 474 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 474 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 474 M
+( getCurrentAddress\(\).toString\(\);) s
+14.4 466 M (463:) s
+35.4 466 M
+(                }) s
+14.4 458 M (464:) s
+35.4 458 M
+(        }) s
+14.4 450 M (465:) s
+14.4 442 M (466:) s
+35.4 442 M
+(        @Override) s
+14.4 434 M (467:) s
+35.4 434 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 434 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 434 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 434 M
+(boolean) s
+/F-gs-font 7 7 SF
+127.8 434 M
+( initProtection\(ArrayList<IPv4Address> addresses, ) s
+/Courier-Bold 7 7 SUF
+337.8 434 M
+(int) s
+/F-gs-font 7 7 SF
+350.4 434 M
+( ) s
+5 426 M
+(servicePort, ) s
+/Courier-Bold 7 7 SUF
+59.6 426 M
+(int) s
+/F-gs-font 7 7 SF
+72.2 426 M
+( threshold\) {) s
+14.4 418 M (468:) s
+35.4 418 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 418 M
+(if) s
+/F-gs-font 7 7 SF
+111 418 M
+(\(initialized\)) s
+14.4 410 M (469:) s
+35.4 410 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 410 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 410 M
+( ) s
+/Courier-Bold 7 7 SUF
+165.6 410 M
+(false) s
+/F-gs-font 7 7 SF
+186.6 410 M
+(;) s
+14.4 402 M (470:) s
+14.4 394 M (471:) s
+35.4 394 M
+(                addressPool = addresses;) s
+14.4 386 M (472:) s
+35.4 386 M
+(                protectedServicePort = TransportPort.of\(servicePort\);) s
+14.4 378 M (473:) s
+35.4 378 M
+(                connectionsThreshold = threshold;) s
+14.4 370 M (474:) s
+14.4 362 M (475:) s
+35.4 362 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+182.4 362 M
+("controller: initializing to protectedSer) s
+5 354 M
+(vicePort = ") s
+/F-gs-font 7 7 SF
+55.4 354 M
+( + protectedServicePort.toString\(\)) s
+14.4 346 M (476:) s
+35.4 346 M
+(                                + ) s
+/Courier-Bold 7 7 SUF
+178.2 346 M
+(" threshold = ") s
+/F-gs-font 7 7 SF
+241.2 346 M
+( + threshold\);) s
+14.4 338 M (477:) s
+35.4 338 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+182.4 338 M
+("controller: new address pool:") s
+/F-gs-font 7 7 SF
+312.6 338 M
+(\);) s
+14.4 330 M (478:) s
+35.4 330 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 330 M
+(for) s
+/F-gs-font 7 7 SF
+115.2 330 M
+(\(IPv4Address ip : addresses\)) s
+14.4 322 M (479:) s
+35.4 322 M
+(                        System.out.println\() s
+/Courier-Bold 7 7 SUF
+216 322 M
+("\\t\\t\\t") s
+/F-gs-font 7 7 SF
+249.6 322 M
+( + ip.toString\(\)\);) s
+14.4 314 M (480:) s
+35.4 314 M
+(                System.out.println\() s
+/Courier-Bold 7 7 SUF
+182.4 314 M
+("controller: set current address \(index x) s
+5 306 M
+(\) to ") s
+/F-gs-font 7 7 SF
+30.2 306 M
+( + addresses.get\(currentAddressIndex\).toString\(\)\);) s
+14.4 298 M (481:) s
+14.4 290 M (482:) s
+35.4 290 M
+(                ) s
+/Courier-Oblique 7 7 SUF
+102.6 290 M
+(// this method must be called only one time at instance) s
+/F-gs-font 7 7 SF
+14.4 282 M (483:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 282 M
+(                initialized = ) s
+/Courier-Bold 7 7 SUF
+161.4 282 M
+(true) s
+/F-gs-font 7 7 SF
+178.2 282 M
+(;) s
+14.4 274 M (484:) s
+14.4 266 M (485:) s
+35.4 266 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 266 M
+(return) s
+/F-gs-font 7 7 SF
+127.8 266 M
+( ) s
+/Courier-Bold 7 7 SUF
+132 266 M
+(true) s
+/F-gs-font 7 7 SF
+148.8 266 M
+(;) s
+14.4 258 M (486:) s
+35.4 258 M
+(        }) s
+14.4 250 M (487:) s
+14.4 242 M (488:) s
+35.4 242 M
+(        ) s
+/Courier-Bold 7 7 SUF
+69 242 M
+(public) s
+/F-gs-font 7 7 SF
+94.2 242 M
+( ) s
+/Courier-Bold 7 7 SUF
+98.4 242 M
+(class) s
+/F-gs-font 7 7 SF
+119.4 242 M
+( DDoSDefenceWebRoutable ) s
+/Courier-Bold 7 7 SUF
+220.2 242 M
+(implements) s
+/F-gs-font 7 7 SF
+262.2 242 M
+( RestletRoutable {) s
+14.4 234 M (489:) s
+14.4 226 M (490:) s
+35.4 226 M
+(                @Override) s
+14.4 218 M (491:) s
+35.4 218 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 218 M
+(public) s
+/F-gs-font 7 7 SF
+127.8 218 M
+( Restlet getRestlet\(Context context\) {) s
+14.4 210 M (492:) s
+35.4 210 M
+(                        Router router = ) s
+/Courier-Bold 7 7 SUF
+203.4 210 M
+(new) s
+/F-gs-font 7 7 SF
+216 210 M
+( Router\(context\);) s
+14.4 202 M (493:) s
+14.4 194 M (494:) s
+35.4 194 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 194 M
+(// controller summary stats REST resource) s
+/F-gs-font 7 7 SF
+14.4 186 M (495:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 186 M
+(                        router.attach\() s
+/Courier-Bold 7 7 SUF
+195 186 M
+("/controller/summary/json") s
+/F-gs-font 7 7 SF
+304.2 186 M
+(, Controller) s
+5 178 M
+(SummaryResource.) s
+/Courier-Bold 7 7 SUF
+72.2 178 M
+(class) s
+/F-gs-font 7 7 SF
+93.2 178 M
+(\);) s
+14.4 170 M (496:) s
+35.4 170 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 170 M
+(// loaded modules REST resource) s
+/F-gs-font 7 7 SF
+14.4 162 M (497:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 162 M
+(                        router.attach\() s
+/Courier-Bold 7 7 SUF
+195 162 M
+("/controller/modules/json") s
+/F-gs-font 7 7 SF
+304.2 162 M
+(, LoadedModu) s
+5 154 M
+(leLoaderResource.) s
+/Courier-Bold 7 7 SUF
+76.4 154 M
+(class) s
+/F-gs-font 7 7 SF
+97.4 154 M
+(\);) s
+14.4 146 M (498:) s
+35.4 146 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 146 M
+(// connected switches REST resource) s
+/F-gs-font 7 7 SF
+14.4 138 M (499:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 138 M
+(                        router.attach\() s
+/Courier-Bold 7 7 SUF
+195 138 M
+("/controller/switches/json") s
+/F-gs-font 7 7 SF
+308.4 138 M
+(, Controlle) s
+5 130 M
+(rSwitchesResource.) s
+/Courier-Bold 7 7 SUF
+80.6 130 M
+(class) s
+/F-gs-font 7 7 SF
+101.6 130 M
+(\);) s
+14.4 122 M (500:) s
+14.4 114 M (501:) s
+35.4 114 M
+(                        ) s
+/Courier-Oblique 7 7 SUF
+136.2 114 M
+(// ==== Custom resources ====) s
+/F-gs-font 7 7 SF
+14.4 106 M (502:) s
+/Courier-Oblique 7 7 SUF
+/F-gs-font 7 7 SF
+35.4 106 M
+(                        router.attach\() s
+/Courier-Bold 7 7 SUF
+195 106 M
+("/init/json") s
+/F-gs-font 7 7 SF
+245.4 106 M
+(, InitDefenceResource.) s
+/Courier-Bold 7 7 SUF
+337.8 106 M
+(clas) s
+5 98 M
+(s) s
+/F-gs-font 7 7 SF
+9.2 98 M
+(\);) s
+14.4 90 M (503:) s
+35.4 90 M
+(                        router.attach\() s
+/Courier-Bold 7 7 SUF
+195 90 M
+("/manage/json") s
+/F-gs-font 7 7 SF
+253.8 90 M
+(, EnableDefenceResource.) s
+/Courier-Bold 7 7 SUF
+354.6 90 M
+() s
+5 82 M
+(class) s
+/F-gs-font 7 7 SF
+26 82 M
+(\);) s
+14.4 74 M (504:) s
+14.4 66 M (505:) s
+35.4 66 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 66 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 66 M
+( router;) s
+14.4 58 M (506:) s
+35.4 58 M
+(                }) s
+14.4 50 M (507:) s
+14.4 42 M (508:) s
+35.4 42 M
+(                @Override) s
+14.4 34 M (509:) s
+35.4 34 M
+(                ) s
+/Courier-Bold 7 7 SUF
+102.6 34 M
+(public) s
+/F-gs-font 7 7 SF
+127.8 34 M
+( String basePath\(\) {) s
+14.4 26 M (510:) s
+35.4 26 M
+(                        ) s
+/Courier-Bold 7 7 SUF
+136.2 26 M
+(return) s
+/F-gs-font 7 7 SF
+161.4 26 M
+( ) s
+/Courier-Bold 7 7 SUF
+165.6 26 M
+("/ddosdefence") s
+/F-gs-font 7 7 SF
+224.4 26 M
+(;) s
+14.4 18 M (511:) s
+35.4 18 M
+(                }) s
+14.4 10 M (512:) s
+14.4 2 M (513:) s
+35.4 2 M
+(        }) s
+374.4 530 M (514:) s
+395.4 530 M
+(}) s
+_R
+S
+%%Trailer
+%%Pages: 5
+%%DocumentNeededResources: font Times-Roman Courier-Oblique Courier-Bold 
+%%+ font Courier Times-Bold 
+%%EOF
