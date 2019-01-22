@@ -159,6 +159,7 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return addressPool.get(currentAddressIndex);
 	}
 	
+	// Return the old server address.
 	IPv4Address getForwardingAddress() {
 		if(!protectionEnabled)
 			return null;
@@ -166,6 +167,9 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 		return addressPool.get(previousIndex);
 	}
 
+	/*  Return the current server address.
+		D' if the protection is enabled. Otherwise returns D
+	*/
 	IPv4Address getCurrentAddress() {
 		return addressPool.get(currentAddressIndex);
 	}
@@ -419,8 +423,8 @@ public class DDoSDefence implements IOFMessageListener,IFloodlightModule,IDDoSDe
 					requestedServerAddress,
 					false);
 
-			if(requestedServerAddress.equals(getCurrentAddress())
-					&& protectionEnabled
+			if(protectionEnabled 
+					&& requestedServerAddress.equals(getCurrentAddress())
 					&& connList != null) {
 				// Add OFDelete for (client_srcaddr:* -> D) old entries
 				OFMessageList.add(buildFlowDelete(sw, pi,
